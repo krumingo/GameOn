@@ -1,0 +1,54 @@
+{
+  "summary": "Comprehensive end-to-end backend test suite for FootBallChat. 34/34 tests pass (100%) covering health, OTP auth (start/verify/rate-limit/cooldown/dev-fallback), super-test-login, /api/me GET+PATCH, groups CRUD, FREE plan limit, public marketplace + geo, preview-by-code (no auth), points_config validation, cash categories add/deactivate, members/guests, role change rules, OWNER protection, organizer-vs-organizer removal, and the guest-merge-on-/auth/join flow. Found and fixed 1 minor bug in OTP cooldown (datetime tz mismatch returning 500 instead of 429).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/auth/start (resend cooldown)",
+        "issue": "FIXED — tz-aware vs tz-naive datetime subtraction. MongoDB returns naive datetimes for created_at, but utc_now() is tz-aware, causing TypeError -> HTTP 500 instead of 429 on rapid 2nd OTP request. Patched routes/auth.py to coerce naive last_at to UTC before subtraction (mirrors the same pattern already used in deps.py for billing.period_end)."
+      },
+      {
+        "endpoint": "_create_indexes (lifespan)",
+        "issue": "Indexes are created only at app startup. If the database is dropped while the backend is running (e.g. mongosh dropDatabase), the 2dsphere index on groups.location.point disappears and /api/groups/public returns 500 ('unable to find index for $geoNear query'). Recommend either creating indexes lazily on first use or documenting that DB drops require backend restart."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_backend_e2e.py",
+    "/app/backend/tests/conftest.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Verify that the cooldown patch in routes/auth.py (added `.replace(tzinfo=timezone.utc)` for naive last_at) is the correct fix and consider adding the same defensive coercion anywhere else where datetimes from Mongo are compared against utc_now() (audit done, this was the only spot missed).",
+    "Optional hardening: ensure 2dsphere indexes are created idempotently on first request or in a background watcher, so a wipe-without-restart does not break /api/groups/public."
+  ],
+  "critical_code_review_comments": [
+    "GOOD: Every response uses 'id' instead of '_id' (verified). serialize_doc + _user_to_response wrappers handle conversion correctly.",
+    "GOOD: preview-by-code is declared BEFORE /{group_id} so FastAPI routing works as intended; verified with no-auth test.",
+    "GOOD: FREE plan single-OWNER-group limit enforced via count_owner_groups; second create returns 400 with localized message.",
+    "GOOD: Guest merge flow on /auth/join correctly removes guest doc and inserts membership for the new user.",
+    "MINOR: routes/groups.py update_group POPs forbidden fields after validation but not before model_dump — currently fine because Pydantic model doesn't include them, but worth keeping the defensive code.",
+    "MINOR: deactivate_category endpoint adds to inactive_categories but returns 404 only if category not in cash_categories. Calling DELETE twice is idempotent (no error second time because $addToSet) — acceptable behavior.",
+    "MINOR: /api/auth/join in dev mode (no Twilio) accepts any phone without OTP. This is documented dev behavior; ensure the production switch enforces OTP (verified by code path)."
+  ],
+  "updated_files": [
+    "/app/backend/routes/auth.py (fix: tz coercion in cooldown check)",
+    "/app/backend/tests/test_backend_e2e.py (new)",
+    "/app/backend/tests/conftest.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (34/34)",
+    "frontend": "n/a (skipped per request)"
+  },
+  "test_credentials": "Super tester +359888999999 via POST /api/auth/super-test-login (no payload). Dev OTP 123456 accepted for any phone. Test users created during run: +359888100100 (OwnerTester), +359888666666 (Real User merged from guest), +359888888001 (Org2). JWT_SECRET in backend/.env is used directly by tests to mint tokens for impersonation tests.",
+  "seed_data_creation": "Tests use mongosh dropDatabase() before run + insert seed docs (otp_codes for rate-limit, users for non-super-tester scenarios). Tests are idempotent within a single run as long as the DB is dropped at the start.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Suite expects backend running at REACT_APP_BACKEND_URL. Before each full run, drop DB and restart backend so 2dsphere indexes are recreated: `mongosh footballchat --eval 'db.dropDatabase()' && sudo supervisorctl restart backend && sleep 3 && pytest backend/tests/`. The suite uses pymongo to seed/wipe OTP records to bypass the 60s cooldown when needed. JWT_SECRET is read from backend/.env to mint tokens for the OwnerTester and Org2 users (no public endpoint exists to login an arbitrary phone without OTP+verify path that returns user_exists=False).",
+  "rca of the issue": "Cooldown 500 bug RCA: routes/auth.py:_create_and_send_otp reads last otp_codes.created_at from Mongo. Motor/PyMongo returns BSON datetimes as naive (UTC-equivalent but no tzinfo). The code then performed (now - last_at) where now=utc_now() is tz-aware -> TypeError. Reproduction: POST /api/auth/start twice within 60s for same phone. Fix: after the existing string-coercion branch, also detect naive datetime and attach timezone.utc. Verified: test_resend_cooldown_60s now returns 429 with proper message."
+}
