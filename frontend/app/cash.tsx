@@ -183,7 +183,7 @@ export default function CashScreen() {
       <CreateTxnModal
         visible={createOpen}
         groupId={groupId}
-        categories={groupCategories.length ? groupCategories : ['FOOTBALL', 'EQUIPMENT', 'OTHER']}
+        categories={groupCategories.length ? groupCategories : ['MATCH_FEES', 'BALLS', 'EQUIPMENT', 'KITS', 'BANQUET', 'PITCH_PAYMENT', 'OTHER']}
         onClose={() => setCreateOpen(false)}
         onCreated={() => { setCreateOpen(false); load(); }}
       />
