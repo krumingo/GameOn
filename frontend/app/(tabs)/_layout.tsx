@@ -5,14 +5,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
+import { SettingsModal } from '@/components/SettingsModal';
 import { theme } from '@/theme/darkTheme';
 import { useTranslation } from 'react-i18next';
 
-function HeaderBar() {
+function HeaderBar({ onAvatarPress }: { onAvatarPress: () => void }) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const initials = (user?.name || 'GO')
     .split(' ').map((s) => s[0]).slice(0, 2).join('').toUpperCase();
+  const accentColor = useThemeStore((s) => s.accentColor);
 
   return (
     <SafeAreaView edges={['top']} style={{ backgroundColor: theme.colors.background.primary }}>
@@ -27,8 +29,8 @@ function HeaderBar() {
             <Ionicons name="notifications-outline" size={22} color={theme.colors.text.primary} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.avatar}
-            onPress={() => router.push('/(tabs)/my')}
+            style={[styles.avatar, { backgroundColor: accentColor }]}
+            onPress={onAvatarPress}
             testID="header-avatar"
           >
             <Text style={styles.avatarText}>{initials}</Text>
@@ -82,10 +84,11 @@ export default function TabsLayout() {
   const { t } = useTranslation();
   const accentColor = useThemeStore((s) => s.accentColor);
   const [fabOpen, setFabOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background.primary }}>
-      <HeaderBar />
+      <HeaderBar onAvatarPress={() => setSettingsOpen(true)} />
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -144,6 +147,7 @@ export default function TabsLayout() {
       </TouchableOpacity>
 
       <FabSheet visible={fabOpen} onClose={() => setFabOpen(false)} />
+      <SettingsModal visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </View>
   );
 }
