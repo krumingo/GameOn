@@ -32,6 +32,19 @@
 - [x] Phone masking, E.164 validation
 - [x] Currency EUR enforced
 
+## Implemented (2026-04-26) — PROMPT 2 (matches module)
+- [x] Indexes: matches(group_id+start_datetime DESC, status, recurrence_series_id), rsvps((match_id+user_id) unique sparse), cash_transactions(group_id+created_at DESC)
+- [x] Match CRUD with all 4 pricing modes (FIXED/SPLIT/SPLIT_WITH_CASH/CASH_PAYS_ALL) + planned_price_per_player computation; FREE plan player_limit cap
+- [x] PATCH match (recalc on changes), validation against current going_count, cancel keeps doc in history
+- [x] List upcoming + history (with pagination)
+- [x] RSVP: going/not_going/waitlist auto-promote; SPLIT recalculation on every change; APPROVAL flow (pending/approve/reject); guest RSVP; bulk RSVP; admin remove
+- [x] Late cancellation tracking (<2h before match) updates user.reliability_stats and recomputes score (capped 0..100)
+- [x] PRO Payments: /payments view (all 4 modes math, EUR), /payments/mark with OVERPAID detection (overpaid_to_cash), /payments/record-to-cash inserts INCOME (+EXPENSE for SWC) into cash_transactions
+- [x] PRO Score (admin) + Results (admin can write any, player can write own only) with cross-validation: BLUE/RED individual sums never exceed score totals; setting lower score blocked if individual sums already exceed
+- [x] PRO Teams Draft: set-captains (require both going + reset gating), pick (alternating turn, blocks captain-of-other-team and already-picked), undo-pick, return-player (captains protected), transfer (captains protected, syncs pick_order), lock/unlock, reset (clears teams + player_results, blocked if COMPLETED), set-visibility
+- [x] Recurrence WEEKLY: hourly background loop in lifespan, manual /api/scheduler/process-recurrence trigger, /api/matches/{id}/stop-recurrence (whole series), /api/matches/{id}/series listing
+- [x] All teams_data, score_data, player_results, player_payments embedded in matches doc (no separate collections)
+
 ## Backlog — Future PROMPTs
 - **P0** Matches: create/list, RSVP, capacity & free-spots, recurring matches, scheduler
 - **P0** Splits & Payments: per-player price, marking paid, cash transactions
