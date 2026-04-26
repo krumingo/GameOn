@@ -466,6 +466,88 @@ class ReturnPlayerRequest(BaseModel):
     user_id: str
 
 
+
+
+# ---------------------------------------------------------------------------
+# Billing / Cash / Stats / Seasons / Chat / Listings / Admin / Dev models
+# ---------------------------------------------------------------------------
+class CheckoutSessionRequestModel(BaseModel):
+    group_id: str
+    origin_url: str
+
+
+class PortalRequestModel(BaseModel):
+    group_id: str
+    return_url: str
+
+
+class CashTxnCreateRequest(BaseModel):
+    type: str  # INCOME | EXPENSE
+    category: str
+    amount: float
+    note: Optional[str] = None
+    counterparty: Optional[str] = None
+    status: str = "PAID"  # PLANNED | PAID
+    related_match_id: Optional[str] = None
+
+
+class CashTxnUpdateRequest(BaseModel):
+    amount: Optional[float] = None
+    note: Optional[str] = None
+    counterparty: Optional[str] = None
+    status: Optional[str] = None
+    category: Optional[str] = None
+
+
+class SeasonCreateRequest(BaseModel):
+    name: str
+    start_at: str
+    end_at: str
+
+
+class SeasonUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    start_at: Optional[str] = None
+    end_at: Optional[str] = None
+
+
+class ChatMessageRequest(BaseModel):
+    text: str
+    match_id: Optional[str] = None
+
+
+class ListingCreateRequest(BaseModel):
+    type: str  # MATCH_AVAILABLE | LOOKING_FOR_PLAYERS | LOOKING_FOR_TEAM
+    title: str
+    description: Optional[str] = None
+    venue: Optional[str] = None
+    location: Optional[dict] = None
+    date: Optional[str] = None
+    time: Optional[str] = None
+    spots_needed: Optional[int] = None
+    total_players: Optional[int] = None
+    price_per_player: Optional[float] = None
+    group_id: Optional[str] = None
+    match_id: Optional[str] = None
+
+
+class ListingRespondRequest(BaseModel):
+    message: Optional[str] = None
+
+
+class InviteRequest(BaseModel):
+    user_id: str
+    message: Optional[str] = None
+
+
+class InvitationActionRequest(BaseModel):
+    action: str  # accept | decline
+
+
+class AdminLoginRequest(BaseModel):
+    email: str
+    password: str
+
 class LockTeamsRequest(BaseModel):
     locked: bool
 

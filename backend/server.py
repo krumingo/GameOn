@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import ASCENDING, DESCENDING, GEOSPHERE
 from starlette.middleware.cors import CORSMiddleware
@@ -18,6 +18,7 @@ load_dotenv(ROOT_DIR / ".env")
 
 # Local imports (after env load)
 from deps import set_db, CURRENCY  # noqa: E402
+from routes.health import router as health_router  # noqa: E402
 from routes.auth import router as auth_router, me_router  # noqa: E402
 from routes.groups import router as groups_router  # noqa: E402
 from routes.memberships import router as memberships_router  # noqa: E402
@@ -27,6 +28,19 @@ from routes.matches import (  # noqa: E402
     scheduler_router,
     recurrence_background_loop,
 )
+from routes.billing import router as billing_router, webhook_router  # noqa: E402
+from routes.cash import router as cash_router  # noqa: E402
+from routes.stats import router as stats_router  # noqa: E402
+from routes.seasons import router as seasons_router  # noqa: E402
+from routes.chat import router as chat_router  # noqa: E402
+from routes.listings import (  # noqa: E402
+    router as listings_router,
+    players_router,
+    invitations_router,
+    follows_router,
+)
+from routes.admin import router as admin_router  # noqa: E402
+from routes.dev import router as dev_router  # noqa: E402
 
 logging.basicConfig(
     level=logging.INFO,
@@ -70,8 +84,32 @@ async def _create_indexes(db) -> None:
     )
     await db.rsvps.create_index([("match_id", ASCENDING)])
     await db.rsvps.create_index([("user_id", ASCENDING)], sparse=True)
-    # cash_transactions (used by payments/record-to-cash; full module in Prompt 3)
+    # billing
+    await db.billing.create_index([("group_id", ASCENDING), ("status", ASCENDING)])
+    # cash_transactions
     await db.cash_transactions.create_index([("group_id", ASCENDING), ("created_at", DESCENDING)])
+    await db.cash_transactions.create_index([("group_id", ASCENDING), ("category", ASCENDING)])
+    # seasons
+    await db.seasons.create_index([("group_id", ASCENDING), ("name", ASCENDING)], unique=True)
+    await db.seasons.create_index([("group_id", ASCENDING), ("is_active", ASCENDING)])
+    # messages
+    await db.messages.create_index([("group_id", ASCENDING), ("created_at", DESCENDING)])
+    await db.messages.create_index([("match_id", ASCENDING), ("created_at", DESCENDING)], sparse=True)
+    # listings
+    await db.listings.create_index([("status", ASCENDING), ("type", ASCENDING), ("created_at", DESCENDING)])
+    try:
+        await db.listings.create_index([("location.point", GEOSPHERE)])
+    except Exception as exc:
+        logger.warning("listings.location.point 2dsphere index skipped: %s", exc)
+    # invitations
+    await db.invitations.create_index([("to_user_id", ASCENDING), ("status", ASCENDING)])
+    await db.invitations.create_index([("group_id", ASCENDING), ("status", ASCENDING)])
+    # group_follows
+    await db.group_follows.create_index(
+        [("user_id", ASCENDING), ("group_id", ASCENDING)], unique=True
+    )
+    # payment_transactions
+    await db.payment_transactions.create_index([("session_id", ASCENDING)], unique=True, sparse=True)
 
 
 @asynccontextmanager
@@ -95,9 +133,9 @@ async def lifespan(app: FastAPI):
     )
     logger.info("SMS mode: %s", sms_mode)
     logger.info("Currency: %s", CURRENCY)
+    logger.info("Stripe: %s", "configured" if os.environ.get("STRIPE_API_KEY") else "missing")
     logger.info("FootBallChat backend ready (db=%s)", db_name)
 
-    # Start background recurrence task
     recurrence_task = asyncio.create_task(recurrence_background_loop())
 
     try:
@@ -114,7 +152,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="FootBallChat API", lifespan=lifespan)
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -122,20 +159,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Health
-health_router = APIRouter(prefix="/api", tags=["health"])
-
-
-@health_router.get("/health")
-async def health():
-    return {"status": "ok", "currency": CURRENCY}
-
-
-@health_router.get("/")
-async def root():
-    return {"service": "FootBallChat", "status": "ok"}
-
 
 # Register routers
 app.include_router(health_router)
@@ -146,3 +169,15 @@ app.include_router(memberships_router)
 app.include_router(matches_group_router)
 app.include_router(match_router)
 app.include_router(scheduler_router)
+app.include_router(billing_router)
+app.include_router(webhook_router)
+app.include_router(cash_router)
+app.include_router(stats_router)
+app.include_router(seasons_router)
+app.include_router(chat_router)
+app.include_router(listings_router)
+app.include_router(players_router)
+app.include_router(invitations_router)
+app.include_router(follows_router)
+app.include_router(admin_router)
+app.include_router(dev_router)
