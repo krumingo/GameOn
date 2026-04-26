@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 
 # Load frontend env to pick public REACT_APP_BACKEND_URL
 load_dotenv(Path(__file__).resolve().parents[2] / "frontend" / ".env")
+# Load backend env to expose MONGO_URL/DB_NAME for direct DB checks
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 if not BASE_URL:

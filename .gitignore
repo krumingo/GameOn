@@ -187,3 +187,8 @@ credentials.json
 *.pem
 *.key
 .credentials
+
+# Production secrets / mobile build credentials
+!.env.example
+google-services.json
+google-service-account.json

@@ -8,6 +8,7 @@ from typing import Optional
 
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel
 
 from deps import (
     CheckoutSessionRequestModel,
@@ -231,6 +232,26 @@ async def billing_portal(payload: PortalRequestModel, current=Depends(get_curren
     return {
         "portal_url": None,
         "message": "Portal-ът ще бъде наличен след първото успешно плащане през Stripe Subscriptions.",
+    }
+
+
+class IAPReceiptRequest(BaseModel):
+    receipt_data: str
+    platform: str  # "ios" | "android"
+    group_id: str
+
+
+@router.post("/validate-iap-receipt")
+async def validate_iap_receipt(payload: IAPReceiptRequest, current=Depends(get_current_user_impl)):
+    """Stub for future Apple/Google IAP receipt validation. Currently returns valid=False."""
+    if payload.platform not in ("ios", "android"):
+        raise HTTPException(status_code=400, detail="platform must be 'ios' or 'android'")
+    if not payload.receipt_data:
+        raise HTTPException(status_code=400, detail="receipt_data is required")
+    return {
+        "valid": False,
+        "message": "IAP validation not yet implemented. Use Stripe checkout via /api/billing/checkout-session for now.",
+        "platform": payload.platform,
     }
 
 

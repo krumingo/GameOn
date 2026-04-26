@@ -28,6 +28,7 @@ from routes.matches import (  # noqa: E402
     scheduler_router,
     recurrence_background_loop,
 )
+from services.reminder_service import reminder_background_loop  # noqa: E402
 from routes.billing import router as billing_router, webhook_router  # noqa: E402
 from routes.cash import router as cash_router  # noqa: E402
 from routes.stats import router as stats_router  # noqa: E402
@@ -105,6 +106,10 @@ async def _create_indexes(db) -> None:
     # invitations
     await db.invitations.create_index([("to_user_id", ASCENDING), ("status", ASCENDING)])
     await db.invitations.create_index([("group_id", ASCENDING), ("status", ASCENDING)])
+    # push_log (de-duplicate reminder pushes)
+    await db.push_log.create_index(
+        [("match_id", ASCENDING), ("user_id", ASCENDING), ("type", ASCENDING)], unique=True
+    )
     # group_follows
     await db.group_follows.create_index(
         [("user_id", ASCENDING), ("group_id", ASCENDING)], unique=True
@@ -138,13 +143,19 @@ async def lifespan(app: FastAPI):
     logger.info("FootBallChat backend ready (db=%s)", db_name)
 
     recurrence_task = asyncio.create_task(recurrence_background_loop())
+    reminder_task = asyncio.create_task(reminder_background_loop())
 
     try:
         yield
     finally:
         recurrence_task.cancel()
+        reminder_task.cancel()
         try:
             await recurrence_task
+        except (asyncio.CancelledError, Exception):
+            pass
+        try:
+            await reminder_task
         except (asyncio.CancelledError, Exception):
             pass
         client.close()

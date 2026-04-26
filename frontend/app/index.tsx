@@ -3,7 +3,8 @@ import {
   View, Text, TextInput, StyleSheet, KeyboardAvoidingView,
   Platform, ScrollView, TouchableOpacity, Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as Linking from 'expo-linking';
 import { useTranslation } from 'react-i18next';
 import { authApi } from '@/api/client';
 import { useAuthStore } from '@/store/authStore';
@@ -15,6 +16,7 @@ const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : false;
 export default function LoginScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const params = useLocalSearchParams<{ code?: string }>();
   const { login } = useAuthStore();
 
   const [name, setName] = useState('');
@@ -26,6 +28,23 @@ export default function LoginScreen() {
   const [resendIn, setResendIn] = useState(0);
   const [devMode, setDevMode] = useState(false);
   const otpRefs = useRef<Array<TextInput | null>>([]);
+
+  // Pre-fill entry code from deep link (?code=SPORT26 or initial URL gameon://join?code=...)
+  useEffect(() => {
+    if (params.code) {
+      setGroupCode(String(params.code).toUpperCase());
+      return;
+    }
+    (async () => {
+      try {
+        const url = await Linking.getInitialURL();
+        if (!url) return;
+        const parsed = Linking.parse(url);
+        const code = (parsed.queryParams as any)?.code;
+        if (code) setGroupCode(String(code).toUpperCase());
+      } catch {}
+    })();
+  }, [params.code]);
 
   // Resend countdown
   useEffect(() => {

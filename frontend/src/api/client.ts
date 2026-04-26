@@ -172,6 +172,8 @@ export const billingApi = {
     apiClient.get(`/billing/checkout-status/${sessionId}`).then(r => r.data),
   createPortal: (groupId: string, returnUrl: string) =>
     apiClient.post('/billing/portal', { group_id: groupId, return_url: returnUrl }).then(r => r.data),
+  validateIapReceipt: (payload: { receipt_data: string; platform: 'ios' | 'android'; group_id: string }) =>
+    apiClient.post('/billing/validate-iap-receipt', payload).then(r => r.data),
 };
 
 export const cashApi = {
