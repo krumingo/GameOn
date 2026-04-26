@@ -1,0 +1,53 @@
+{
+  "tabs": { "profile": "My profile", "discover": "Discover", "stats": "Stats" },
+  "auth": {
+    "title": "GameOn",
+    "subtitle": "Organize your football matches",
+    "name": "Name",
+    "phone": "Phone",
+    "groupCode": "Group code (optional)",
+    "continue": "Continue",
+    "otpTitle": "Enter the code",
+    "otpSent": "SMS sent to",
+    "resend": "Resend",
+    "resendIn": "Resend in {{seconds}}s",
+    "devMode": "Dev mode — code: 123456",
+    "terms": "By continuing you accept",
+    "termsLink": "the Terms",
+    "and": "and",
+    "privacyLink": "the Privacy Policy",
+    "errorPhone": "Invalid phone",
+    "errorName": "Name is required",
+    "errorOtp": "Invalid code",
+    "skipLogin": "Quick test login"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "noData": "No data",
+    "search": "Search...",
+    "currency": "€",
+    "newMatch": "New match",
+    "newGroup": "New group",
+    "joinGroup": "Join group"
+  },
+  "match": {
+    "going": "Going",
+    "notGoing": "Not going",
+    "signUp": "Sign up",
+    "full": "Full",
+    "waitlist": "Waitlist",
+    "spotsLeft": "spots",
+    "perPlayer": "per player",
+    "weekly": "Every week",
+    "cancelled": "Cancelled"
+  },
+  "notifications": { "offline": "No internet connection" },
+  "placeholder": { "comingSoon": "Coming in the next prompt" }
+}

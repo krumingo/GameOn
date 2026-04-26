@@ -1,0 +1,53 @@
+{
+  "tabs": { "profile": "Моя профил", "discover": "Открий", "stats": "Статистика" },
+  "auth": {
+    "title": "GameOn",
+    "subtitle": "Организирай футболния си мач",
+    "name": "Име",
+    "phone": "Телефон",
+    "groupCode": "Код на група (опционално)",
+    "continue": "Продължи",
+    "otpTitle": "Въведи кода",
+    "otpSent": "Изпратихме SMS на",
+    "resend": "Изпрати отново",
+    "resendIn": "Изпрати отново след {{seconds}}s",
+    "devMode": "Dev режим — код: 123456",
+    "terms": "С продължаване приемате",
+    "termsLink": "Условията",
+    "and": "и",
+    "privacyLink": "Политиката за поверителност",
+    "errorPhone": "Невалиден телефон",
+    "errorName": "Името е задължително",
+    "errorOtp": "Невалиден код",
+    "skipLogin": "Бърз тест вход"
+  },
+  "common": {
+    "save": "Запази",
+    "cancel": "Откажи",
+    "delete": "Изтрий",
+    "edit": "Редактирай",
+    "close": "Затвори",
+    "loading": "Зареждам...",
+    "error": "Грешка",
+    "retry": "Опитай отново",
+    "noData": "Няма данни",
+    "search": "Търси...",
+    "currency": "€",
+    "newMatch": "Нов мач",
+    "newGroup": "Нова група",
+    "joinGroup": "Присъедини се към група"
+  },
+  "match": {
+    "going": "Записан",
+    "notGoing": "Не играя",
+    "signUp": "Запиши се",
+    "full": "Пълен",
+    "waitlist": "Чакащ",
+    "spotsLeft": "свободни",
+    "perPlayer": "на играч",
+    "weekly": "Всяка седмица",
+    "cancelled": "Отменен"
+  },
+  "notifications": { "offline": "Няма интернет връзка" },
+  "placeholder": { "comingSoon": "Идва в следващия промпт" }
+}

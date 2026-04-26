@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "GameOn",
+    "slug": "gameon",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "gameon",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0A0E14",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.gameon.app",
+      "infoPlist": {
+        "NSCalendarsUsageDescription": "GameOn иска достъп до календара за да добави мачове",
+        "NSLocationWhenInUseUsageDescription": "GameOn иска локацията ти за да покаже мачове наоколо"
+      }
+    },
+    "android": {
+      "package": "com.gameon.app",
+      "adaptiveIcon": { "backgroundColor": "#0A0E14" },
+      "permissions": ["CALENDAR", "ACCESS_FINE_LOCATION"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}
