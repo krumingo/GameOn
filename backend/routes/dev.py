@@ -53,6 +53,12 @@ async def reset_all(current=Depends(get_current_user_impl)):
 async def seed_demo_data():
     _check_enabled()
     db = get_db()
+    # Recreate indexes idempotently so dropDatabase + seed without restart works
+    try:
+        from server import _create_indexes
+        await _create_indexes(db)
+    except Exception:
+        pass
     now = utc_now()
 
     # 10 demo users

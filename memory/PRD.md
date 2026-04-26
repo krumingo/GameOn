@@ -45,6 +45,18 @@
 - [x] Recurrence WEEKLY: hourly background loop in lifespan, manual /api/scheduler/process-recurrence trigger, /api/matches/{id}/stop-recurrence (whole series), /api/matches/{id}/series listing
 - [x] All teams_data, score_data, player_results, player_payments embedded in matches doc (no separate collections)
 
+## Implemented (2026-04-26) — PROMPT 3 (full feature backend)
+- [x] **Billing**: Stripe Checkout via emergentintegrations (server-side fixed price 5€/mo), payment_transactions collection, webhook /api/webhook/stripe, GET /billing/group/{id} with plan + features_locked, mark-paid (admin/test), portal stub
+- [x] **Cash**: full CRUD, summary with balance/income/expense/categories breakdown/recent_transactions, **player_balances** aggregated from match.player_payments (paid - owed), CSV/JSON export, finance-summary per-match
+- [x] **Stats**: my_stats VISIBLE for FREE plan, top_players, recent_matches; leaderboard PRO with metrics points/goals/participations; **leaderboard ALWAYS reads group.points_config (no hardcoded values)** — verified by PATCH test
+- [x] **Seasons**: CRUD + set-active (deactivates others, sets group.active_season_id) + close (computes top-3 champions, stores in `champions[]`) + Hall of Fame + delete (blocked if matches reference)
+- [x] **Chat**: text+emoji (Unicode), max 2000 chars, member-gated, before-cursor pagination
+- [x] **Listings**: 3 types (MATCH_AVAILABLE/LOOKING_FOR_PLAYERS/LOOKING_FOR_TEAM), browse FREE no-auth with geo $near, create PRO admin, respond/accept/reject (auto-RSVP for MATCH_AVAILABLE), close/delete author-only
+- [x] **Player search** (PRO admin) by name/phone-suffix with exclude_group; **Invitations** (PRO admin) with accept→membership creation; **Group follows** (FREE) with /me/following + next_match_date
+- [x] **Admin panel**: hardcoded login (env ADMIN_EMAIL/ADMIN_PASSWORD), JWT admin token (12h), stats dashboard (revenue from payment_transactions EUR), groups/users/payments listing with filters
+- [x] **Dev tools**: /seed-demo-data (11 BG users + 2 groups SPORT26/DIT2026 + 4 matches + 1 closed season with HOF + 1 active + 5 cash txns + 2 listings + 3 chat msgs); /reset; /seed-status; index recreation on seed for dev reset DX
+- [x] **Health**: GET /api/health returns version + currency + status
+
 ## Backlog — Future PROMPTs
 - **P0** Matches: create/list, RSVP, capacity & free-spots, recurring matches, scheduler
 - **P0** Splits & Payments: per-player price, marking paid, cash transactions
