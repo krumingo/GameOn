@@ -51,22 +51,34 @@ WeeklyStats card, GroupCard collapsible (plan pill, expand chevron), MatchCard (
 - **AuthGuard** correctly skips /admin/* segment; **apiClient** auto-attaches admin_token for /admin/* paths and falls back to user token elsewhere.
 **Tests: 21/21 backend + 100% frontend testIDs (iteration_8.json).**
 
+### PROMPT 9 (Iteration A) — Push Notifications + Error Handling + Share + Performance (2026-04-26)
+- **Backend**: services/push_service.py (Expo Push API + group/match token resolvers); routes/push.py (POST /push/register-token + DELETE + GET/PUT /push/prefs + dev /push/test); push hooks fire-and-forget in matches.py for RSVP toggle, new match create, and match cancel — all wrapped in try/except so they never block the response.
+- **Frontend Push setup** (utils/push.ts): web-safe (no-op on Platform.OS==='web'); registerForPushAsync auto-prompts permission + registers token after login on native; Android channels (matches/chat/system); foreground handler; deep-link router based on notification.data.type.
+- **Notification preferences UI** in /notifications: 4 toggles (new_matches/reminders/rsvp_changes/chat) + conditional reminder_hours block (1h/2h/1ден/2дни) + Save button → PUT /api/push/prefs.
+- **Error handling**: utils/events.ts tiny emitter; client.ts 403 detail.code='PLAN_PRO_REQUIRED' → events.emit('showPaywall') → GlobalPaywall modal in _layout.tsx; 500 errors → Alert 'Сървърна грешка' (or console.warn on web).
+- **Retry**: utils/retry.ts withRetry exponential backoff (skips 4xx); applied to RSVP toggle, payments/mark, score set.
+- **Share Group Modal** (ShareGroupModal.tsx): big entry_code text + copy-code + copy-link + native share (Web Share API fallback to Clipboard); integrated as group-share-{id} button on /(tabs)/my GroupCard and room-share button on room/[id] header.
+- **Performance**: React.memo on MatchCard and GroupCard.
+**Tests: 15/15 backend (1 skip data-related) + 100% frontend testable on web (iteration_9.json + /app/backend/tests/test_prompt9.py).**
+
 ## Backlog — Future PROMPTs
 
-### PROMPT 8 (Iteration B) — pending
-- **P1** Push Notifications: backend register-token + update-prefs endpoints + Expo Notifications integration (foreground listener, response listener, channels for matches/chat/system); UI toggles in `/notifications` for new_matches/reminders/reminder_hours/rsvp_changes/chat.
-- **P1** Error Handling enhancements: 403 PLAN_PRO_REQUIRED → global PaywallOverlay event bus; 500 → "Сървърна грешка" alert with retry; Retry logic for RSVP/payments/score (max 3 retries).
+### PROMPT 9 (Iteration B) — pending
+- **P2** FlatList migration for PlayersTab, ChatTab, Admin lists (current ScrollView works but FlatList is more efficient at scale).
+- **P2** UI polish pass: explicit empty states, loading skeletons, KeyboardAvoidingView audit, consistent spacing review.
+- **P2** Replace Alert.alert success messages with Toast/Snackbar for web consistency (noted by testing agent).
 
 ### Long-term
 - **P2** Reliability score automation (RSVP vs attended tracking)
 - **P3** Map view in Discover with `react-native-maps` + GPS radius slider
 - **P3** Recurring weekly listing auto-archive
 - **P3** In-app payment receipts download
+- **P3** Push reminder cron job (using user.push_prefs.reminder_hours)
 
 ## Test Credentials
 See `/app/memory/test_credentials.md`. Super test phone: `+359888999999`.
 
 ## Next Action Items
-1. **P1** PROMPT 8 Iteration B — Push Notifications (Expo + backend register-token / push_prefs endpoints)
-2. **P1** PROMPT 8 Iteration B — Global error handling (paywall event bus + retry logic for critical APIs)
-3. **P2** Reliability score automation (RSVP vs attended)
+1. **P2** PROMPT 9 Iteration B — FlatList migration + UI polish pass + Toast/Snackbar for web success messages
+2. **P2** Reliability score automation
+3. **P3** Map view in Discover
