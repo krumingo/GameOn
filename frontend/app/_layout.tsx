@@ -20,10 +20,12 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isLoading) return;
+    const inAdminGroup = segments[0] === 'admin';
     const inAuthGroup = segments[0] === '(tabs)' || segments[0] === 'room' ||
                         segments[0] === 'cash' || segments[0] === 'notifications' ||
-                        segments[0] === 'search-player' || segments[0] === 'admin' ||
+                        segments[0] === 'search-player' ||
                         segments[0] === 'billing';
+    if (inAdminGroup) return; // admin has its own token + flow
     if (!isAuthenticated && inAuthGroup) {
       router.replace('/');
     } else if (isAuthenticated && segments.length === 0) {
@@ -56,6 +58,10 @@ export default function RootLayout() {
                 <Stack.Screen name="billing/success" />
                 <Stack.Screen name="privacy" />
                 <Stack.Screen name="terms" />
+                <Stack.Screen name="admin/login" />
+                <Stack.Screen name="admin/dashboard" />
+                <Stack.Screen name="admin/groups" />
+                <Stack.Screen name="admin/users" />
               </Stack>
             </AuthGuard>
           </View>

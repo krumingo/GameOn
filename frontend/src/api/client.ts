@@ -15,7 +15,9 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(async (config) => {
   try {
-    const token = await AsyncStorage.getItem('token');
+    const isAdminPath = (config.url || '').startsWith('/admin/') || (config.url || '').startsWith('admin/');
+    const tokenKey = isAdminPath ? 'admin_token' : 'token';
+    const token = await AsyncStorage.getItem(tokenKey);
     if (token) config.headers.Authorization = `Bearer ${token}`;
   } catch {}
   return config;
@@ -25,9 +27,15 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const status = error?.response?.status;
-    if (status === 401) {
+    const url = error?.config?.url || '';
+    const isAdminPath = url.startsWith('/admin/') || url.startsWith('admin/');
+    if (status === 401 && !isAdminPath) {
       await AsyncStorage.multiRemove(['token', 'user']);
       try { router.replace('/'); } catch {}
+    }
+    if (status === 401 && isAdminPath && !url.includes('/admin/login')) {
+      await AsyncStorage.removeItem('admin_token');
+      try { router.replace('/admin/login'); } catch {}
     }
     return Promise.reject(error);
   }
@@ -151,6 +159,11 @@ export const cashApi = {
     apiClient.delete(`/groups/${groupId}/cash/transactions/${txId}`).then(r => r.data),
   getFinanceSummary: (groupId: string) =>
     apiClient.get(`/groups/${groupId}/finance-summary`).then(r => r.data),
+  getExport: (groupId: string, format: 'csv' | 'json' = 'csv', periodStart?: string, periodEnd?: string) =>
+    apiClient.get(`/groups/${groupId}/cash/export`, {
+      params: { format, period_start: periodStart, period_end: periodEnd },
+      responseType: format === 'csv' ? 'blob' : 'json',
+    }).then(r => r.data),
 };
 
 export const statsApi = {
@@ -219,6 +232,8 @@ export const adminApi = {
     apiClient.get('/admin/groups', { params }).then(r => r.data),
   getUsers: (params?: any) =>
     apiClient.get('/admin/users', { params }).then(r => r.data),
+  getGroupDetail: (id: string) => apiClient.get(`/admin/groups/${id}`).then(r => r.data),
+  getUserDetail: (id: string) => apiClient.get(`/admin/users/${id}`).then(r => r.data),
 };
 
 export default apiClient;

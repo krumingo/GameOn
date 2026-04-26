@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert,
-  Modal, TextInput, ActivityIndicator,
+  Modal, TextInput, ActivityIndicator, Platform,
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { cashApi, groupsApi, billingApi } from '@/api/client';
 import { GlassCard } from '@/components/GlassCard';
 import { LoadingButton } from '@/components/LoadingButton';
@@ -76,6 +77,47 @@ export default function CashScreen() {
   const isAdmin = groupRole === 'OWNER' || groupRole === 'ORGANIZER';
   const isPro = PRO_PLANS.includes(groupPlan);
 
+  const handleExport = (format: 'csv' | 'json') => {
+    if (!groupId) return;
+    (async () => {
+      try {
+        const apiUrl = process.env.EXPO_PUBLIC_API_URL || process.env.REACT_APP_BACKEND_URL || '';
+        const token = await AsyncStorage.getItem('token');
+        const url = `${apiUrl}/api/groups/${groupId}/cash/export?format=${format}`;
+        const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        if (!resp.ok) throw new Error(String(resp.status));
+        if (Platform.OS === 'web') {
+          const blob = await resp.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = `cash_${groupId}.${format}`;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        } else {
+          const text = await resp.text();
+          Alert.alert('Експорт', text.slice(0, 500));
+        }
+      } catch (e: any) {
+        Alert.alert('Грешка', 'Експорт неуспешен');
+      }
+    })();
+  };
+
+  const showExportSheet = () => {
+    if (Platform.OS === 'web') {
+      // simple confirm-style
+      const choice = window.prompt('Експорт като (csv / json):', 'csv');
+      if (choice === 'csv' || choice === 'json') handleExport(choice);
+      return;
+    }
+    Alert.alert('Експорт', 'Избери формат', [
+      { text: 'CSV', onPress: () => handleExport('csv') },
+      { text: 'JSON', onPress: () => handleExport('json') },
+      { text: 'Отказ', style: 'cancel' },
+    ]);
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
@@ -91,7 +133,13 @@ export default function CashScreen() {
           <Ionicons name="chevron-back" size={22} color={theme.colors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('cash.title')}{groupName ? ` · ${groupName}` : ''}</Text>
-        <View style={{ width: 36 }} />
+        {isPro && isAdmin ? (
+          <TouchableOpacity onPress={showExportSheet} style={styles.iconBtn} testID="cash-export">
+            <Ionicons name="download-outline" size={20} color={theme.colors.text.primary} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 36 }} />
+        )}
       </View>
 
       {!isPro ? (

@@ -27,6 +27,7 @@ export default function StatsScreen() {
   const [seasonId, setSeasonId] = useState<string>('all');
   const [metric, setMetric] = useState<string>('points');
   const [leaderboard, setLeaderboard] = useState<any>(null);
+  const [hallOfFame, setHallOfFame] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -59,8 +60,15 @@ export default function StatsScreen() {
         } catch {
           setLeaderboard(null);
         }
+        try {
+          const hof = await seasonsApi.getHallOfFame(groupId);
+          setHallOfFame(Array.isArray(hof) ? hof : []);
+        } catch {
+          setHallOfFame([]);
+        }
       } else {
         setLeaderboard(null);
+        setHallOfFame([]);
       }
     } catch (e) {
       // ignore
@@ -200,6 +208,45 @@ export default function StatsScreen() {
               ))
             )}
           </GlassCard>
+          {leaderboard?.points_config && (
+            <Text style={styles.pointsConfigText} testID="points-config">
+              Точкуване: Победа={leaderboard.points_config.win}, Равен={leaderboard.points_config.draw}, Загуба={leaderboard.points_config.loss}
+            </Text>
+          )}
+
+          {hallOfFame.length > 0 && (
+            <>
+              <Text style={styles.h2}>Хроники</Text>
+              {hallOfFame.map((entry: any) => {
+                const s = entry.season || entry;
+                const champs = entry.champions || s.champions || [];
+                return (
+                  <GlassCard key={s.id} style={{ marginBottom: 8 }} testID={`hof-${s.id}`}>
+                    <Text style={styles.hofTitle}>{s.name}</Text>
+                    {(s.start_at || s.end_at) && (
+                      <Text style={styles.muted}>
+                        {(s.start_at || '').slice(0, 10)}{s.end_at ? ` — ${s.end_at.slice(0, 10)}` : ''}
+                      </Text>
+                    )}
+                    <View style={{ marginTop: 10, gap: 6 }}>
+                      {champs.slice(0, 3).map((c: any, idx: number) => {
+                        const colors = [theme.colors.accent.gold, '#C0C0C0', '#CD7F32'];
+                        const medals = ['🥇', '🥈', '🥉'];
+                        return (
+                          <View key={c.user_id || idx} style={styles.hofRow} testID={`hof-${s.id}-${idx}`}>
+                            <Text style={[styles.hofMedal, { color: colors[idx] }]}>{medals[idx]}</Text>
+                            <Text style={styles.hofName}>{c.name}</Text>
+                            {c.points != null && <Text style={[styles.hofPts, { color: colors[idx] }]}>{c.points} т</Text>}
+                            {c.coefficient != null && <Text style={styles.muted}>· {Number(c.coefficient).toFixed(2)}</Text>}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </GlassCard>
+                );
+              })}
+            </>
+          )}
         </>
       )}
 
@@ -280,4 +327,10 @@ const styles = StyleSheet.create({
   scoreLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 },
   scoreSide: { fontSize: 16, fontWeight: '800' },
   scoreVs: { color: theme.colors.text.muted, fontSize: 18 },
+  pointsConfigText: { color: theme.colors.text.muted, fontSize: 11, fontStyle: 'italic', textAlign: 'center', marginTop: 8 },
+  hofTitle: { color: theme.colors.text.primary, fontSize: 15, fontWeight: '700' },
+  hofRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  hofMedal: { fontSize: 18 },
+  hofName: { color: theme.colors.text.primary, fontSize: 14, fontWeight: '600', flex: 1 },
+  hofPts: { fontSize: 13, fontWeight: '800' },
 });

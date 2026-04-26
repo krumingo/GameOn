@@ -100,6 +100,11 @@ export const TeamsTab: React.FC<Props> = ({
     try { await matchesApi.returnPlayer(match.id, uid); await fetch(); onRefresh(); }
     catch (e: any) { Alert.alert('Грешка', e?.response?.data?.detail || 'Неуспешно'); }
   };
+  const handleTransfer = async (uid: string, toTeam: 'BLUE' | 'RED') => {
+    const fromTeam = toTeam === 'BLUE' ? 'RED' : 'BLUE';
+    try { await matchesApi.transferPlayer(match.id, uid, fromTeam, toTeam); await fetch(); onRefresh(); }
+    catch (e: any) { Alert.alert('Грешка', e?.response?.data?.detail || 'Неуспешно'); }
+  };
   const handleUndo = async () => {
     try { await matchesApi.undoPick(match.id); await fetch(); onRefresh(); }
     catch (e: any) { Alert.alert('Грешка', e?.response?.data?.detail || 'Неуспешно'); }
@@ -141,12 +146,16 @@ export const TeamsTab: React.FC<Props> = ({
         players={data.blue_players || []} captainId={td.blue_captain_id}
         canEdit={isAdmin && !locked}
         onReturn={handleReturn}
+        onTransfer={handleTransfer}
+        otherTeam="RED"
       />
       <TeamPanel
         label="Червени" color={theme.colors.accent.red_team}
         players={data.red_players || []} captainId={td.red_captain_id}
         canEdit={isAdmin && !locked}
         onReturn={handleReturn}
+        onTransfer={handleTransfer}
+        otherTeam="BLUE"
       />
 
       {!locked && (
@@ -212,7 +221,7 @@ const CaptainPicker: React.FC<any> = ({ value, onChange, options, colorAccent, t
   </View>
 );
 
-const TeamPanel: React.FC<any> = ({ label, color, players, captainId, canEdit, onReturn }) => (
+const TeamPanel: React.FC<any> = ({ label, color, players, captainId, canEdit, onReturn, onTransfer, otherTeam }) => (
   <GlassCard style={[styles.teamCard, { borderColor: color, borderWidth: 1 }]}>
     <Text style={[styles.teamHeader, { color }]}>{label} ({players.length})</Text>
     {players.map((p: any) => {
@@ -226,9 +235,22 @@ const TeamPanel: React.FC<any> = ({ label, color, players, captainId, canEdit, o
             <Text style={[styles.name, { color }]}>{p.name}</Text>
           </View>
           {canEdit && !isCap && (
-            <TouchableOpacity onPress={() => onReturn(p.user_id || p.guest_id)} style={styles.removeBtn}>
-              <Ionicons name="close" size={14} color={theme.colors.accent.danger} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              <TouchableOpacity
+                onPress={() => onTransfer(p.user_id || p.guest_id, otherTeam)}
+                style={styles.transferBtn}
+                testID={`transfer-${p.user_id || p.guest_id}`}
+              >
+                <Ionicons name="swap-horizontal" size={14} color={theme.colors.accent.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => onReturn(p.user_id || p.guest_id)}
+                style={styles.removeBtn}
+                testID={`return-${p.user_id || p.guest_id}`}
+              >
+                <Ionicons name="close" size={14} color={theme.colors.accent.danger} />
+              </TouchableOpacity>
+            </View>
           )}
         </View>
       );
@@ -259,4 +281,5 @@ const styles = StyleSheet.create({
   pickBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
   pickText: { color: '#fff', fontWeight: '700', fontSize: 12 },
   removeBtn: { width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(239,68,68,0.15)', alignItems: 'center', justifyContent: 'center' },
+  transferBtn: { width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(59,130,246,0.15)', alignItems: 'center', justifyContent: 'center' },
 });
