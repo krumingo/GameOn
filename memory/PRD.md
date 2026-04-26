@@ -61,24 +61,38 @@ WeeklyStats card, GroupCard collapsible (plan pill, expand chevron), MatchCard (
 - **Performance**: React.memo on MatchCard and GroupCard.
 **Tests: 15/15 backend (1 skip data-related) + 100% frontend testable on web (iteration_9.json + /app/backend/tests/test_prompt9.py).**
 
+### PROMPT 10 — Production Deploy Prep (2026-04-26)
+- **Reminder Cron** (services/reminder_service.py): `check_and_send_reminders()` scans UPCOMING matches in next 48h, finds `going` RSVPs, filters by `push_prefs.reminders/reminder_hours`, fires within ±5min trigger window, dedupes via `push_log` collection (unique compound index on match_id+user_id+type). Runs every 5 min as `reminder_background_loop` in lifespan alongside `recurrence_background_loop`.
+- **IAP stub**: POST /api/billing/validate-iap-receipt (returns valid:false until real Apple/Google validation wired); frontend `src/services/iap.ts` with `getProductId()` + `startPurchase()` routing all platforms through Stripe checkout for now.
+- **EAS Build config**: `eas.json` with development/preview/production profiles + submit config for both stores; `app.json` upgraded with bundleIdentifier=com.gameon.app, versionCode/buildNumber, expo-notifications/expo-calendar/expo-location plugins, scheme='gameon', splash + icon paths.
+- **Placeholder Assets** (Pillow-generated): icon.png 1024×1024, splash.png 1284×2778, adaptive-icon.png 1024×1024, notification-icon.png 96×96, favicon.png 64×64. (`assets/_README.md` notes they must be replaced before store submission.)
+- **Deep linking**: app/index.tsx pre-fills group code from `?code=XXX` query param (via useLocalSearchParams) or cold-start `gameon://join?code=XXX` (via Linking.getInitialURL).
+- **Production env**: `backend/.env.example` template; `/app/.gitignore` excludes `.env*` (with `!.env.example` allowlist) and Google service-account JSONs; `/app/memory/DEPLOY_CHECKLIST.md` runbook for backend, frontend, App Store, Google Play, post-deploy verification, and future native-IAP migration.
+**Tests: 13/13 prompt10 backend + 50/51 regression PASS (1 expected SKIP) + 100% frontend testable (iteration_10.json + /app/backend/tests/test_prompt10.py).**
+
 ## Backlog — Future PROMPTs
 
 ### PROMPT 9 (Iteration B) — pending
-- **P2** FlatList migration for PlayersTab, ChatTab, Admin lists (current ScrollView works but FlatList is more efficient at scale).
-- **P2** UI polish pass: explicit empty states, loading skeletons, KeyboardAvoidingView audit, consistent spacing review.
-- **P2** Replace Alert.alert success messages with Toast/Snackbar for web consistency (noted by testing agent).
+- **P2** FlatList migration for PlayersTab, ChatTab, Admin lists.
+- **P2** UI polish pass: skeleton loaders + Toast/Snackbar for web success messages.
+
+### PROMPT 11 — Native IAP (post App-Store submission)
+- **P1** Switch from Stripe-in-WebView to native IAP (`expo-in-app-purchases` or `react-native-iap`)
+- **P1** Real Apple/Google receipt validation in `/api/billing/validate-iap-receipt`
+- **P1** Restore-purchase flow + receipt re-validation on app start
 
 ### Long-term
 - **P2** Reliability score automation (RSVP vs attended tracking)
 - **P3** Map view in Discover with `react-native-maps` + GPS radius slider
 - **P3** Recurring weekly listing auto-archive
 - **P3** In-app payment receipts download
-- **P3** Push reminder cron job (using user.push_prefs.reminder_hours)
+- **P3** App Store screenshots automation script
 
 ## Test Credentials
 See `/app/memory/test_credentials.md`. Super test phone: `+359888999999`.
 
 ## Next Action Items
-1. **P2** PROMPT 9 Iteration B — FlatList migration + UI polish pass + Toast/Snackbar for web success messages
-2. **P2** Reliability score automation
-3. **P3** Map view in Discover
+1. **Pre-submit** Replace EAS placeholder ids in app.json (`extra.eas.projectId` + `updates.url`) with real values from `eas build:configure`
+2. **Pre-submit** Replace placeholder PNGs in `/app/frontend/assets/` with final designs
+3. **P1** PROMPT 11 — Native IAP migration (required for App Store approval)
+4. **P2** PROMPT 9 Iteration B — FlatList migration + UI polish + Toast/Snackbar

@@ -8,7 +8,7 @@
 - [ ] `SUPER_TEST_LOGIN_ENABLED=false` in production
 - [ ] Twilio account verified, phone number purchased, `TWILIO_*` keys set
 - [ ] Stripe LIVE key + price_id + webhook secret configured
-- [ ] Stripe webhook URL in dashboard points to `https://api.gameon.bg/api/stripe/webhook`
+- [ ] Stripe webhook URL in dashboard points to `https://api.gameon.bg/api/webhook/stripe`
 - [ ] CORS `allow_origins` narrowed from `*` to known domains in `server.py`
 
 ## Backend deploy
