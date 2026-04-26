@@ -72,6 +72,19 @@
 - [x] Placeholder screens for: my, discover, stats, room/[id], cash, notifications, search-player, billing/success, privacy, terms
 - [x] All RN components use `testID` (auto-converted to `data-testid` by react-native-web)
 
+## Implemented (2026-04-26) — PROMPT 5 (My Profile screen)
+- [x] **WeeklyStats** card: 'Тази седмица' label + prev/next arrows for offset, two big numbers (мача / записан за), 7-day bars (Пн-Нд) with today highlight
+- [x] **GroupCard** (collapsible): GROUP label + name + meta (X мача · Y участници), plan pill (PRO=gold, TRIAL=blue+Xд, GRACE=amber, FREE=gray), expand toggle with chevron, action row (Финанси / Група), embedded MatchCard list (≤5)
+- [x] **MatchCard**: time/venue/date headline, capacity badge (X/N), 'X свободни' / 'Чакащи: N' / 'Пълен' / 'Отменен' status, price '≈ EUR/играч' or 'Безплатно' when 0, recurrence pill, edit pencil for organizers, players inline with current user marked '(ти)' in orange
+- [x] **MatchCard RSVP**: optimistic toggle with spinner (LoadingButton); going → '✓ Записан' + 'Откажи'; not_going → 'Запиши се'; pending → disabled outline; waitlist → '#N' outline; CANCELLED hides RSVP entirely
+- [x] **Calendar add suggestion** on RSVP-going (mobile only) via expo-calendar
+- [x] **SeasonBadge** rendered when any group has active_season_name (clicks to Stats tab)
+- [x] **Empty state**: football icon + 'Все още нямаш група' + Създай група / Присъедини се buttons
+- [x] **GroupActionModal**: create (name input → POST /api/groups) and join (code uppercase → POST /api/groups/join) flows; reused by FAB menu and empty state
+- [x] **SettingsModal** (avatar in header opens it): avatar w/ initials, **reliability badge color-graded** (green ≥90, amber ≥70, red <70), name/nickname/email editable + masked phone (read-only), 'Запази профил' → PATCH /api/me + authStore.updateUser persist + Alert
+- [x] Settings: 8-color **accent picker** (white ring on selected) — instant theme update across tab bar / FAB / avatar; **BG/EN language toggle**; terms/privacy links; **logout** with confirmation (web window.confirm, native Alert), 60px+ separation from color picker
+- [x] FAB sheet wired to `/(tabs)/my?action=newGroup|joinGroup` deep-link → opens modal in correct mode
+
 ## Backlog — Future PROMPTs
 - **P0** Matches: create/list, RSVP, capacity & free-spots, recurring matches, scheduler
 - **P0** Splits & Payments: per-player price, marking paid, cash transactions

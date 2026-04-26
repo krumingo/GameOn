@@ -157,7 +157,9 @@ export const MatchCard: React.FC<Props> = ({
         </View>
 
         <Text style={styles.price}>
-          ≈ {(match.price_per_player ?? 0).toFixed(2)} {currency}/играч
+          {(match.price_per_player ?? 0) > 0
+            ? `≈ ${(match.price_per_player ?? 0).toFixed(2)} ${currency}/играч`
+            : 'Безплатно'}
         </Text>
 
         {goingNames.length > 0 && (
