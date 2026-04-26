@@ -37,19 +37,36 @@ WeeklyStats card, GroupCard collapsible (plan pill, expand chevron), MatchCard (
 - **`/notifications`**: invitations inbox with accept/decline.
 **Tests: 24/24 backend + 5/5 frontend screens (iteration_7.json).**
 
+### PROMPT 8 (Iteration A) — Admin Panel + 4 audit fixes + Billing Success + Legal (2026-04-26)
+- **FIX 1 — Transfer button** in TeamsTab next to each non-captain player (transfer-{id} swap-horizontal + return-{id} close).
+- **FIX 2 — Hall of Fame** section in Stats (PRO) loading seasonsApi.getHallOfFame() with gold/silver/bronze medals + points + coefficient per closed season.
+- **FIX 3 — Cash Export** icon button in /cash header (PRO+admin) → CSV/JSON download via fetch with Authorization header → blob download on web.
+- **FIX 4 — points_config display** under leaderboard ('Точкуване: Победа=X, Равен=Y, Загуба=Z').
+- **`/admin/login`**: shield icon + email + password (with eye toggle) → POST /api/admin/login → stores admin_token (12h TTL).
+- **`/admin/dashboard`**: 6 stat cards (users/groups/active matches/PRO/FREE/Trial) + revenue card (€) + signups/matches last-7-days + nav buttons.
+- **`/admin/groups`**: search input + 4 plan filter chips + paginated list with plan pill + detail Alert.
+- **`/admin/users`**: search input + paginated list with masked phone + reliability score badge (color-graded) + detail Alert.
+- **`/billing/success?session_id=`**: 2s polling up to 30s with 4 states (checking/paid/pending/error) + retry button.
+- **`/privacy`** + **`/terms`**: 7+8 sections in Bulgarian, Dark Glass formatting.
+- **AuthGuard** correctly skips /admin/* segment; **apiClient** auto-attaches admin_token for /admin/* paths and falls back to user token elsewhere.
+**Tests: 21/21 backend + 100% frontend testIDs (iteration_8.json).**
+
 ## Backlog — Future PROMPTs
-- **P2** `/billing/success` — confirmation screen after Stripe checkout
-- **P2** `/privacy` + `/terms` — legal pages
-- **P2** `/admin/*` — admin panel UI (login, dashboard, groups, users, payments)
-- **P2** Push notifications (Expo Notifications)
-- **P2** Reliability score automation (RSVP vs attended)
-- **P3** Advanced match filters in Discover (date range + radius slider + map view)
+
+### PROMPT 8 (Iteration B) — pending
+- **P1** Push Notifications: backend register-token + update-prefs endpoints + Expo Notifications integration (foreground listener, response listener, channels for matches/chat/system); UI toggles in `/notifications` for new_matches/reminders/reminder_hours/rsvp_changes/chat.
+- **P1** Error Handling enhancements: 403 PLAN_PRO_REQUIRED → global PaywallOverlay event bus; 500 → "Сървърна грешка" alert with retry; Retry logic for RSVP/payments/score (max 3 retries).
+
+### Long-term
+- **P2** Reliability score automation (RSVP vs attended tracking)
+- **P3** Map view in Discover with `react-native-maps` + GPS radius slider
 - **P3** Recurring weekly listing auto-archive
+- **P3** In-app payment receipts download
 
 ## Test Credentials
 See `/app/memory/test_credentials.md`. Super test phone: `+359888999999`.
 
 ## Next Action Items
-1. **P2** Implement billing success screen + privacy/terms pages
-2. **P2** Implement admin panel UI
-3. **P2** Wire push notifications
+1. **P1** PROMPT 8 Iteration B — Push Notifications (Expo + backend register-token / push_prefs endpoints)
+2. **P1** PROMPT 8 Iteration B — Global error handling (paywall event bus + retry logic for critical APIs)
+3. **P2** Reliability score automation (RSVP vs attended)
