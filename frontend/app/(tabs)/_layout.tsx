@@ -16,20 +16,20 @@ function HeaderBar() {
 
   return (
     <SafeAreaView edges={['top']} style={{ backgroundColor: theme.colors.background.primary }}>
-      <View style={styles.header} data-testid="app-header">
+      <View style={styles.header} testID="app-header">
         <Text style={styles.brand}>GameOn</Text>
         <View style={styles.headerRight}>
           <TouchableOpacity
             style={styles.iconButton}
             onPress={() => router.push('/notifications')}
-            data-testid="header-bell"
+            testID="header-bell"
           >
             <Ionicons name="notifications-outline" size={22} color={theme.colors.text.primary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.avatar}
             onPress={() => router.push('/(tabs)/my')}
-            data-testid="header-avatar"
+            testID="header-avatar"
           >
             <Text style={styles.avatarText}>{initials}</Text>
           </TouchableOpacity>
@@ -45,11 +45,11 @@ function FabSheet({ visible, onClose }: { visible: boolean; onClose: () => void 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.modalBackdrop} onPress={onClose}>
-        <View style={styles.sheet} data-testid="fab-sheet">
+        <View style={styles.sheet} testID="fab-sheet">
           <TouchableOpacity
             style={styles.sheetItem}
             onPress={() => { onClose(); router.push('/room/new'); }}
-            data-testid="fab-new-match"
+            testID="fab-new-match"
           >
             <Ionicons name="football-outline" size={22} color={theme.colors.accent.primary} />
             <Text style={styles.sheetItemText}>{t('common.newMatch')}</Text>
@@ -58,7 +58,7 @@ function FabSheet({ visible, onClose }: { visible: boolean; onClose: () => void 
           <TouchableOpacity
             style={styles.sheetItem}
             onPress={() => { onClose(); router.push('/(tabs)/my?action=newGroup'); }}
-            data-testid="fab-new-group"
+            testID="fab-new-group"
           >
             <Ionicons name="people-outline" size={22} color={theme.colors.accent.primary} />
             <Text style={styles.sheetItemText}>{t('common.newGroup')}</Text>
@@ -67,7 +67,7 @@ function FabSheet({ visible, onClose }: { visible: boolean; onClose: () => void 
           <TouchableOpacity
             style={styles.sheetItem}
             onPress={() => { onClose(); router.push('/(tabs)/my?action=joinGroup'); }}
-            data-testid="fab-join-group"
+            testID="fab-join-group"
           >
             <Ionicons name="enter-outline" size={22} color={theme.colors.accent.primary} />
             <Text style={styles.sheetItemText}>{t('common.joinGroup')}</Text>
@@ -137,7 +137,7 @@ export default function TabsLayout() {
       <TouchableOpacity
         style={[styles.fab, { backgroundColor: accentColor }]}
         onPress={() => setFabOpen(true)}
-        data-testid="fab-button"
+        testID="fab-button"
         activeOpacity={0.85}
       >
         <Ionicons name="add" size={28} color="#fff" />

@@ -5,7 +5,7 @@ import { theme } from '@/theme/darkTheme';
 export const Placeholder: React.FC<{ title: string; subtitle?: string; testID?: string }> = ({
   title, subtitle, testID,
 }) => (
-  <View style={styles.container} data-testid={testID || 'placeholder-screen'}>
+  <View style={styles.container} testID={testID || 'placeholder-screen'}>
     <Text style={styles.title}>{title}</Text>
     {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
   </View>

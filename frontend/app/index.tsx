@@ -147,7 +147,7 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.brandWrap}>
-          <Text style={styles.title} data-testid="login-title">{t('auth.title')}</Text>
+          <Text style={styles.title} testID="login-title">{t('auth.title')}</Text>
           <Text style={styles.subtitle}>{t('auth.subtitle')}</Text>
         </View>
 
@@ -161,7 +161,7 @@ export default function LoginScreen() {
               placeholderTextColor={theme.colors.text.muted}
               style={styles.input}
               autoCapitalize="words"
-              data-testid="login-name-input"
+              testID="login-name-input"
             />
 
             <Text style={styles.label}>{t('auth.phone')}</Text>
@@ -172,7 +172,7 @@ export default function LoginScreen() {
               placeholderTextColor={theme.colors.text.muted}
               style={styles.input}
               keyboardType="phone-pad"
-              data-testid="login-phone-input"
+              testID="login-phone-input"
             />
 
             <Text style={styles.label}>{t('auth.groupCode')}</Text>
@@ -183,7 +183,7 @@ export default function LoginScreen() {
               placeholderTextColor={theme.colors.text.muted}
               style={styles.input}
               autoCapitalize="characters"
-              data-testid="login-group-code-input"
+              testID="login-group-code-input"
             />
 
             <LoadingButton
@@ -206,7 +206,7 @@ export default function LoginScreen() {
 
         {step === 'otp' && (
           <View style={styles.formWrap}>
-            <Text style={styles.otpTitle} data-testid="login-otp-title">{t('auth.otpTitle')}</Text>
+            <Text style={styles.otpTitle} testID="login-otp-title">{t('auth.otpTitle')}</Text>
             <Text style={styles.otpSent}>
               {t('auth.otpSent')} {phone}
             </Text>
@@ -222,14 +222,14 @@ export default function LoginScreen() {
                   style={styles.otpInput}
                   keyboardType="number-pad"
                   maxLength={1}
-                  data-testid={`login-otp-${idx}`}
+                  testID={`login-otp-${idx}`}
                   textAlign="center"
                 />
               ))}
             </View>
 
             {(devMode || isDev) && (
-              <View style={styles.devBanner} data-testid="login-dev-banner">
+              <View style={styles.devBanner} testID="login-dev-banner">
                 <Text style={styles.devText}>{t('auth.devMode')}</Text>
               </View>
             )}
@@ -246,7 +246,7 @@ export default function LoginScreen() {
             <TouchableOpacity
               onPress={handleResend}
               disabled={resendIn > 0}
-              data-testid="login-resend-button"
+              testID="login-resend-button"
               style={{ marginTop: 16, alignSelf: 'center' }}
             >
               <Text style={[styles.linkText, resendIn > 0 && { opacity: 0.4 }]}>
@@ -259,7 +259,7 @@ export default function LoginScreen() {
             <TouchableOpacity
               onPress={() => setStep('form')}
               style={{ marginTop: 8, alignSelf: 'center' }}
-              data-testid="login-back-button"
+              testID="login-back-button"
             >
               <Text style={[styles.linkText, { color: theme.colors.text.muted }]}>
                 ← Назад

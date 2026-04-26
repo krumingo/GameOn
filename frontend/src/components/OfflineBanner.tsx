@@ -16,7 +16,7 @@ export const OfflineBanner: React.FC = () => {
 
   if (!offline) return null;
   return (
-    <View style={styles.banner} data-testid="offline-banner">
+    <View style={styles.banner} testID="offline-banner">
       <Text style={styles.text}>{t('notifications.offline')}</Text>
     </View>
   );

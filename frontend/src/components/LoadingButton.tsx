@@ -51,7 +51,7 @@ export const LoadingButton: React.FC<Props> = ({
       onPress={handlePress}
       disabled={isDisabled}
       testID={testID}
-      data-testid={testID}
+      testID={testID}
     >
       {loading ? (
         <ActivityIndicator color={variant === 'outline' ? theme.colors.accent.primary : '#fff'} />

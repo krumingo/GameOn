@@ -57,6 +57,21 @@
 - [x] **Dev tools**: /seed-demo-data (11 BG users + 2 groups SPORT26/DIT2026 + 4 matches + 1 closed season with HOF + 1 active + 5 cash txns + 2 listings + 3 chat msgs); /reset; /seed-status; index recreation on seed for dev reset DX
 - [x] **Health**: GET /api/health returns version + currency + status
 
+## Implemented (2026-04-26) — PROMPT 4 (Frontend foundation)
+- [x] **Expo + TypeScript + expo-router** setup, Web target on port 3000 via `yarn start` → `expo start --web --port 3000`
+- [x] **DB separation**: backend uses `DB_NAME=gameon_dev` for preview/dev. Tests should use `DB_NAME=gameon_test` (override at test-time). Seed in gameon_dev preserved.
+- [x] **EXPO_PUBLIC_API_URL = REACT_APP_BACKEND_URL** (in /app/frontend/.env)
+- [x] Dark Glass theme tokens (background.primary=#0A0E14, accent.primary=#3B82F6, status colors)
+- [x] **Bulgarian default i18n** with English fallback, all UI text in src/i18n/{bg,en}.json
+- [x] **Auth Login** screen: form (name/phone +359 prefilled/group_code uppercase) → OTP step (6 boxes auto-focus, dev banner, 60s resend countdown, auto-submit on 6 digits). Super-test-login outline button bypasses OTP
+- [x] **AuthGuard** in _layout.tsx with AsyncStorage persistence; 401 → multiRemove + redirect to /
+- [x] **Tabs** (Моя профил / Открий / Статистика) with active accentColor; custom header (brand + bell + avatar initials); FAB '+' opens bottom-sheet (Нов мач / Нова група / Присъедини се)
+- [x] **API client** with namespaces for all backend endpoints (auth, groups, matches, billing, cash, stats, seasons, chat, listings, players, dev, admin)
+- [x] **Zustand stores**: authStore (login/logout/checkAuth/updateUser persist), themeStore (accentColor persist)
+- [x] **ErrorBoundary** + **OfflineBanner** (NetInfo) + **LoadingButton** (haptic + 3 variants)
+- [x] Placeholder screens for: my, discover, stats, room/[id], cash, notifications, search-player, billing/success, privacy, terms
+- [x] All RN components use `testID` (auto-converted to `data-testid` by react-native-web)
+
 ## Backlog — Future PROMPTs
 - **P0** Matches: create/list, RSVP, capacity & free-spots, recurring matches, scheduler
 - **P0** Splits & Payments: per-player price, marking paid, cash transactions

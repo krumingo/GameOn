@@ -18,13 +18,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <View style={styles.container} data-testid="error-boundary">
+        <View style={styles.container} testID="error-boundary">
           <Text style={styles.title}>Нещо се обърка</Text>
           <Text style={styles.subtitle}>Неочаквана грешка. Моля опитайте отново.</Text>
           <TouchableOpacity
             style={styles.button}
             onPress={() => this.setState({ hasError: false })}
-            data-testid="error-boundary-retry"
+            testID="error-boundary-retry"
           >
             <Text style={styles.buttonText}>Опитай отново</Text>
           </TouchableOpacity>
