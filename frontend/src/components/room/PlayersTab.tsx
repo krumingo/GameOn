@@ -33,9 +33,8 @@ export const PlayersTab: React.FC<Props> = ({
 
   const handleApprove = async (userId: string, action: 'approve' | 'reject') => {
     try {
-      await matchesApi.rsvpRemove; // suppress lint
-      const path = action === 'approve' ? 'approve' : 'reject';
-      await (await import('@/api/client')).default.post(
+      const client = (await import('@/api/client')).default;
+      await client.post(
         `/matches/${match.id}/approve-request`, { user_id: userId, action }
       );
       await onRefresh();
@@ -47,7 +46,6 @@ export const PlayersTab: React.FC<Props> = ({
   const handleRemove = (userId: string, name: string) => {
     const doIt = async () => {
       try {
-        await matchesApi.rsvpRemove ? null : null;
         const client = (await import('@/api/client')).default;
         await client.post(`/matches/${match.id}/rsvp-remove`, { user_id: userId });
         await onRefresh();
