@@ -4,11 +4,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { GlassCard } from './GlassCard';
 import { MatchCard } from './MatchCard';
+import { ShareGroupModal } from './ShareGroupModal';
 import { theme } from '@/theme/darkTheme';
 
 interface Group {
   id: string;
   name: string;
+  entry_code?: string;
   plan: string;
   trial_days_left?: number;
   role: string;
@@ -32,8 +34,9 @@ const PLAN_BADGES: Record<string, { bg: string; color: string; label: string }> 
   FREE: { bg: 'rgba(255,255,255,0.06)', color: theme.colors.text.muted, label: 'FREE' },
 };
 
-export const GroupCard: React.FC<Props> = ({ group, currentUserId, onRsvpToggle, defaultExpanded = true }) => {
+const GroupCardImpl: React.FC<Props> = ({ group, currentUserId, onRsvpToggle, defaultExpanded = true }) => {
   const [expanded, setExpanded] = useState(defaultExpanded);
+  const [shareOpen, setShareOpen] = useState(false);
   const router = useRouter();
   const planConfig = PLAN_BADGES[group.plan] || PLAN_BADGES.FREE;
   const currency = group.currency || '€';
@@ -51,7 +54,18 @@ export const GroupCard: React.FC<Props> = ({ group, currentUserId, onRsvpToggle,
           <View style={styles.headerRow}>
             <View style={{ flex: 1 }}>
               <Text style={styles.label}>ГРУПА</Text>
-              <Text style={styles.name} numberOfLines={1}>{group.name}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={styles.name} numberOfLines={1}>{group.name}</Text>
+                {group.entry_code && (
+                  <TouchableOpacity
+                    onPress={(e: any) => { e?.stopPropagation?.(); setShareOpen(true); }}
+                    style={styles.shareBtn}
+                    testID={`group-share-${group.id}`}
+                  >
+                    <Ionicons name="share-social-outline" size={14} color={theme.colors.accent.primary} />
+                  </TouchableOpacity>
+                )}
+              </View>
               <Text style={styles.meta}>
                 {group.matches_count} мача · {group.members_count} участници
               </Text>
@@ -124,6 +138,13 @@ export const GroupCard: React.FC<Props> = ({ group, currentUserId, onRsvpToggle,
           </View>
         )}
       </GlassCard>
+      <ShareGroupModal
+        visible={shareOpen}
+        groupId={group.id}
+        groupName={group.name}
+        entryCode={group.entry_code || ''}
+        onClose={() => setShareOpen(false)}
+      />
     </View>
   );
 };
@@ -149,4 +170,11 @@ const styles = StyleSheet.create({
   actionText: { color: theme.colors.text.primary, fontWeight: '600', fontSize: 13 },
   empty: { color: theme.colors.text.muted, fontSize: 13, textAlign: 'center', paddingVertical: 16 },
   viewAll: { color: theme.colors.accent.primary, fontSize: 13, fontWeight: '600', textAlign: 'center', paddingVertical: 8 },
+  shareBtn: {
+    width: 26, height: 26, borderRadius: 13,
+    backgroundColor: 'rgba(59,130,246,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+  },
 });
+
+export const GroupCard = React.memo(GroupCardImpl);

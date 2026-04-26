@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { matchesApi } from '@/api/client';
+import { withRetry } from '@/utils/retry';
 import { GlassCard } from '@/components/GlassCard';
 import { PaywallOverlay } from '@/components/PaywallOverlay';
 import { theme } from '@/theme/darkTheme';
@@ -45,7 +46,7 @@ export const ResultsTab: React.FC<Props> = ({
     if (scoreTimer.current) clearTimeout(scoreTimer.current);
     scoreTimer.current = setTimeout(async () => {
       try {
-        await matchesApi.setScore(match.id, b, r);
+        await withRetry(() => matchesApi.setScore(match.id, b, r));
         setSavedAt(Date.now());
         onRefresh();
       } catch (e: any) {

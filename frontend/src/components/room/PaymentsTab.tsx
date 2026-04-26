@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Modal, TextInput, Alert, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { matchesApi } from '@/api/client';
+import { withRetry } from '@/utils/retry';
 import { GlassCard } from '@/components/GlassCard';
 import { LoadingButton } from '@/components/LoadingButton';
 import { PaywallOverlay } from '@/components/PaywallOverlay';
@@ -54,10 +55,10 @@ export const PaymentsTab: React.FC<Props> = ({ match, groupPlan, groupId, isAdmi
 
   const handleMark = async (paid_amount: number) => {
     try {
-      await matchesApi.markPayment(match.id, {
+      await withRetry(() => matchesApi.markPayment(match.id, {
         user_id: markFor.user_id, guest_id: markFor.guest_id || undefined,
         status: 'PAID', paid_amount,
-      });
+      }));
       setMarkFor(null);
       await fetch();
       await onRefresh();

@@ -5,6 +5,7 @@ import {
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { groupsApi, matchesApi } from '@/api/client';
+import { withRetry } from '@/utils/retry';
 import { useAuthStore } from '@/store/authStore';
 import { GroupCard } from '@/components/GroupCard';
 import { WeeklyStats } from '@/components/WeeklyStats';
@@ -106,7 +107,7 @@ export default function MyScreen() {
   const handleRsvpToggle = useCallback(
     async (matchId: string, newStatus: string) => {
       try {
-        await matchesApi.rsvp(matchId, newStatus);
+        await withRetry(() => matchesApi.rsvp(matchId, newStatus));
         await fetchGroups();
       } catch (e: any) {
         const detail = e?.response?.data?.detail;

@@ -1,15 +1,24 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View } from 'react-native';
+import { Modal, View, TouchableOpacity, Text, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import '@/i18n';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { PaywallOverlay } from '@/components/PaywallOverlay';
 import { theme } from '@/theme/darkTheme';
+import { events } from '@/utils/events';
+import {
+  setupAndroidChannels,
+  configureForegroundHandler,
+  registerForPushAsync,
+  getDeepLinkFromData,
+} from '@/utils/push';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
@@ -25,7 +34,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
                         segments[0] === 'cash' || segments[0] === 'notifications' ||
                         segments[0] === 'search-player' ||
                         segments[0] === 'billing';
-    if (inAdminGroup) return; // admin has its own token + flow
+    if (inAdminGroup) return;
     if (!isAuthenticated && inAuthGroup) {
       router.replace('/');
     } else if (isAuthenticated && segments.length === 0) {
@@ -34,6 +43,75 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, isLoading, segments]);
 
   return <>{children}</>;
+}
+
+function GlobalPaywall() {
+  const [data, setData] = useState<{ groupId: string; feature: string } | null>(null);
+  useEffect(() => {
+    const handler = (p: any) => setData(p || null);
+    events.on('showPaywall', handler);
+    return () => events.off('showPaywall', handler);
+  }, []);
+  if (!data) return null;
+  return (
+    <Modal visible animationType="fade" transparent onRequestClose={() => setData(null)}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)' }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 16, paddingTop: Platform.OS === 'ios' ? 56 : 32 }}>
+          <TouchableOpacity
+            onPress={() => setData(null)}
+            style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' }}
+            testID="global-paywall-close"
+          >
+            <Ionicons name="close" size={22} color="#fff" />
+          </TouchableOpacity>
+        </View>
+        <PaywallOverlay
+          feature={data.feature}
+          groupId={data.groupId}
+          plan="FREE"
+        />
+      </View>
+    </Modal>
+  );
+}
+
+function PushSetup() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const router = useRouter();
+
+  useEffect(() => {
+    setupAndroidChannels();
+    configureForegroundHandler();
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    registerForPushAsync().catch(() => {});
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    let receivedSub: any;
+    let responseSub: any;
+    (async () => {
+      try {
+        const Notifications = await import('expo-notifications');
+        receivedSub = Notifications.addNotificationReceivedListener(() => {});
+        responseSub = Notifications.addNotificationResponseReceivedListener((response: any) => {
+          try {
+            const data = response?.notification?.request?.content?.data || {};
+            const link = getDeepLinkFromData(data);
+            if (link) router.push(link as any);
+          } catch {}
+        });
+      } catch {}
+    })();
+    return () => {
+      try { receivedSub?.remove?.(); } catch {}
+      try { responseSub?.remove?.(); } catch {}
+    };
+  }, [router]);
+
+  return null;
 }
 
 export default function RootLayout() {
@@ -64,6 +142,8 @@ export default function RootLayout() {
                 <Stack.Screen name="admin/users" />
               </Stack>
             </AuthGuard>
+            <PushSetup />
+            <GlobalPaywall />
           </View>
         </SafeAreaProvider>
       </GestureHandlerRootView>

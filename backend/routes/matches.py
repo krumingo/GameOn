@@ -359,6 +359,23 @@ async def create_match(group_id: str, payload: CreateMatchRequest, current=Depen
     saved = await db.matches.find_one({"_id": res.inserted_id})
     out = _serialize_match(saved)
     out.update(await _match_summary(saved, current["id"]))
+    # Fire-and-forget push notification: new match
+    try:
+        from services.push_service import get_group_push_tokens, send_push_batch
+        when = saved["start_datetime"].strftime("%d.%m %H:%M") if hasattr(saved.get("start_datetime"), "strftime") else ""
+        tokens = await get_group_push_tokens(
+            group_id, exclude_user_id=current["id"], pref_key="new_matches",
+        )
+        if tokens:
+            await send_push_batch(
+                tokens,
+                title="Нов мач",
+                body=f"{saved.get('name') or 'Мач'} — {when}",
+                data={"type": "match", "group_id": group_id, "match_id": str(saved["_id"])},
+                channel_id="matches",
+            )
+    except Exception as _e:
+        logger.warning(f"Push (new_match) failed: {_e}")
     return out
 
 
@@ -529,6 +546,24 @@ async def cancel_match(match_id: str, payload: CancelMatchRequest, current=Depen
     saved = await db.matches.find_one({"_id": match["_id"]})
     out = _serialize_match(saved)
     out.update(await _match_summary(saved, current["id"]))
+    # Fire-and-forget push notification: match cancelled — notify all 'going' players
+    try:
+        from services.push_service import get_user_push_tokens_for_match, send_push_batch
+        reason = (payload.reason or "").strip()
+        body = f"{saved.get('name') or 'Мач'}: {reason}" if reason else f"{saved.get('name') or 'Мач'} е отменен"
+        tokens = await get_user_push_tokens_for_match(
+            match, exclude_user_id=current["id"], rsvp_status="going", pref_key="new_matches",
+        )
+        if tokens:
+            await send_push_batch(
+                tokens,
+                title="Мач отменен",
+                body=body,
+                data={"type": "match", "group_id": str(match["group_id"]), "match_id": str(match["_id"])},
+                channel_id="matches",
+            )
+    except Exception as _e:
+        logger.warning(f"Push (cancel) failed: {_e}")
     return out
 
 
@@ -654,6 +689,26 @@ async def rsvp(match_id: str, payload: RSVPRequest, current=Depends(get_current_
         await _recalc_split_price(match)
 
     refreshed = await db.matches.find_one({"_id": match["_id"]})
+    # Fire-and-forget push notification
+    try:
+        from services.push_service import get_group_push_tokens, send_push_batch
+        user = await db.users.find_one({"_id": uid}, {"_id": 0, "name": 1})
+        user_name = (user or {}).get("name") or "Играч"
+        match_name = match.get("name") or "мач"
+        verb = "се записа за" if payload.status == "going" else "се отписа от"
+        tokens = await get_group_push_tokens(
+            str(match["group_id"]), exclude_user_id=current["id"], pref_key="rsvp_changes",
+        )
+        if tokens:
+            await send_push_batch(
+                tokens,
+                title="RSVP промяна",
+                body=f"{user_name} {verb} {match_name}",
+                data={"type": "match", "group_id": str(match["group_id"]), "match_id": str(match["_id"])},
+                channel_id="matches",
+            )
+    except Exception as _e:
+        logger.warning(f"Push (rsvp) failed: {_e}")
     return {
         "rsvp": _rsvp_response(rsvp_doc),
         "match_summary": await _match_summary(refreshed, current["id"]),

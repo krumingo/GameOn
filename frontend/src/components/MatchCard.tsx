@@ -47,7 +47,7 @@ function formatDay(iso: string): { day: string; time: string; date: string } {
   }
 }
 
-export const MatchCard: React.FC<Props> = ({
+const MatchCardImpl: React.FC<Props> = ({
   match, rsvpList = [], currentUserId, isOrganizer, currency,
   onPress, onRsvpToggle,
 }) => {
@@ -270,3 +270,5 @@ const styles = StyleSheet.create({
   },
   goingText: { color: theme.colors.accent.success, fontWeight: '700' },
 });
+
+export const MatchCard = React.memo(MatchCardImpl);

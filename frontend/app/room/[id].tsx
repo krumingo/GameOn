@@ -6,6 +6,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { matchesApi, billingApi, groupsApi } from '@/api/client';
+import { withRetry } from '@/utils/retry';
 import { useAuthStore } from '@/store/authStore';
 import { LoadingButton } from '@/components/LoadingButton';
 import { GlassCard } from '@/components/GlassCard';
@@ -15,6 +16,7 @@ import { ResultsTab } from '@/components/room/ResultsTab';
 import { TeamsTab } from '@/components/room/TeamsTab';
 import { ChatTab } from '@/components/room/ChatTab';
 import { CreateMatchModal } from '@/components/room/CreateMatchModal';
+import { ShareGroupModal } from '@/components/ShareGroupModal';
 import { theme } from '@/theme/darkTheme';
 
 const TABS = [
@@ -49,6 +51,9 @@ export default function MatchRoom() {
   const [busyRsvp, setBusyRsvp] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [groupName, setGroupName] = useState<string>('');
+  const [groupEntryCode, setGroupEntryCode] = useState<string>('');
 
   const loadEverything = useCallback(async () => {
     const id = params.id;
@@ -85,6 +90,8 @@ export default function MatchRoom() {
       setMembers(membersList?.members_list || []);
       setGroupRole(membersList?.role || 'MEMBER');
       setBilling(bill);
+      setGroupName(membersList?.name || '');
+      setGroupEntryCode(membersList?.entry_code || '');
     } catch {
       // Treat as group id
       try {
@@ -98,6 +105,8 @@ export default function MatchRoom() {
         setGroupRole(group?.role || 'MEMBER');
         setMembers(group?.members_list || []);
         setBilling(bill);
+        setGroupName(group?.name || '');
+        setGroupEntryCode(group?.entry_code || '');
         if ((matchesList || []).length > 0) {
           const first = await matchesApi.getById(matchesList[0].id);
           setMatch(first);
@@ -134,7 +143,7 @@ export default function MatchRoom() {
     if (!match) return;
     setBusyRsvp(true);
     try {
-      await matchesApi.rsvp(match.id, newStatus);
+      await withRetry(() => matchesApi.rsvp(match.id, newStatus));
       await refresh();
     } catch (e: any) {
       Alert.alert('Грешка', e?.response?.data?.detail || 'Неуспешно');
@@ -164,7 +173,17 @@ export default function MatchRoom() {
           <Ionicons name="chevron-back" size={22} color={theme.colors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.brand}>Match Room</Text>
-        <View style={{ width: 36 }} />
+        {groupEntryCode ? (
+          <TouchableOpacity
+            onPress={() => setShareOpen(true)}
+            style={styles.iconBtn}
+            testID="room-share"
+          >
+            <Ionicons name="share-social-outline" size={20} color={theme.colors.text.primary} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 36 }} />
+        )}
       </View>
 
       {/* Match selector */}
@@ -317,6 +336,13 @@ export default function MatchRoom() {
         groupPlan={plan}
         onClose={() => setCreateOpen(false)}
         onCreated={refresh}
+      />
+      <ShareGroupModal
+        visible={shareOpen}
+        groupId={groupId}
+        groupName={groupName || 'Група'}
+        entryCode={groupEntryCode}
+        onClose={() => setShareOpen(false)}
       />
     </SafeAreaView>
   );

@@ -1,6 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import { Alert, Platform } from 'react-native';
+import { events } from '@/utils/events';
 
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL ||
@@ -36,6 +38,32 @@ apiClient.interceptors.response.use(
     if (status === 401 && isAdminPath && !url.includes('/admin/login')) {
       await AsyncStorage.removeItem('admin_token');
       try { router.replace('/admin/login'); } catch {}
+    }
+    // Global PRO paywall on 403
+    if (status === 403) {
+      const detail = error?.response?.data?.detail;
+      const code = (detail && typeof detail === 'object' && detail.code) || (detail === 'Тази функция изисква PRO план' ? 'PLAN_PRO_REQUIRED' : null);
+      if (code === 'PLAN_PRO_REQUIRED') {
+        // Try to extract groupId from URL like /groups/{id}/...
+        const m = url.match(/groups\/([a-f0-9]{24})/i);
+        const groupId = m ? m[1] : '';
+        events.emit('showPaywall', {
+          groupId,
+          feature: (detail && typeof detail === 'object' && detail.message) || 'Тази функция',
+        });
+      }
+    }
+    // Global server error toast
+    if (status >= 500 && status < 600) {
+      try {
+        if (Platform.OS === 'web') {
+          // Avoid blocking alert during automated tests when window is missing
+          // eslint-disable-next-line no-console
+          console.warn('[GameOn] Server error', status, url);
+        } else {
+          Alert.alert('Сървърна грешка', 'Нещо се обърка. Опитай отново.');
+        }
+      } catch {}
     }
     return Promise.reject(error);
   }
@@ -234,6 +262,16 @@ export const adminApi = {
     apiClient.get('/admin/users', { params }).then(r => r.data),
   getGroupDetail: (id: string) => apiClient.get(`/admin/groups/${id}`).then(r => r.data),
   getUserDetail: (id: string) => apiClient.get(`/admin/users/${id}`).then(r => r.data),
+};
+
+export const pushApi = {
+  registerToken: (token: string) =>
+    apiClient.post('/push/register-token', { token }).then(r => r.data),
+  unregisterToken: () =>
+    apiClient.delete('/push/register-token').then(r => r.data),
+  getPrefs: () => apiClient.get('/push/prefs').then(r => r.data),
+  updatePrefs: (prefs: any) => apiClient.put('/push/prefs', prefs).then(r => r.data),
+  testPush: () => apiClient.post('/push/test').then(r => r.data),
 };
 
 export default apiClient;

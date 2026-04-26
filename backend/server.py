@@ -41,6 +41,7 @@ from routes.listings import (  # noqa: E402
 )
 from routes.admin import router as admin_router  # noqa: E402
 from routes.dev import router as dev_router  # noqa: E402
+from routes.push import router as push_router  # noqa: E402
 
 logging.basicConfig(
     level=logging.INFO,
@@ -181,3 +182,4 @@ app.include_router(invitations_router)
 app.include_router(follows_router)
 app.include_router(admin_router)
 app.include_router(dev_router)
+app.include_router(push_router)
