@@ -367,3 +367,108 @@ class UpdateMemberRoleRequest(BaseModel):
 class AddGuestRequest(BaseModel):
     name: str
     phone: Optional[str] = None
+
+
+
+# ---------------------------------------------------------------------------
+# Match / RSVP / Teams / Payments / Results models
+# ---------------------------------------------------------------------------
+class CreateMatchRequest(BaseModel):
+    name: str
+    venue: Optional[str] = None
+    location_link: Optional[str] = None
+    start_datetime: str  # ISO 8601
+    total_cost: float = 0
+    price_per_player: float = 0
+    pricing_mode: str = "SPLIT"  # FIXED | SPLIT | SPLIT_WITH_CASH | CASH_PAYS_ALL
+    recurrence: str = "ONE_TIME"  # ONE_TIME | WEEKLY
+    player_limit: int = 14
+    join_mode: str = "AUTO"  # AUTO | APPROVAL
+
+
+class UpdateMatchRequest(BaseModel):
+    name: Optional[str] = None
+    venue: Optional[str] = None
+    location_link: Optional[str] = None
+    start_datetime: Optional[str] = None
+    recurrence: Optional[str] = None
+    player_limit: Optional[int] = None
+    pricing_mode: Optional[str] = None
+    total_cost: Optional[float] = None
+    price_per_player: Optional[float] = None
+    join_mode: Optional[str] = None
+    status: Optional[str] = None
+
+
+class CancelMatchRequest(BaseModel):
+    reason: Optional[str] = None
+
+
+class RSVPRequest(BaseModel):
+    status: str  # going | not_going
+
+
+class RSVPGuestRequest(BaseModel):
+    guest_id: str
+    status: str  # going | not_going
+
+
+class RSVPBulkRequest(BaseModel):
+    user_ids: list[str]
+    status: str = "going"
+
+
+class RSVPRemoveRequest(BaseModel):
+    user_id: str
+    reason: Optional[str] = None
+
+
+class RSVPApprovalRequest(BaseModel):
+    user_id: str
+    action: str  # approve | reject
+
+
+class MarkPaymentRequest(BaseModel):
+    user_id: Optional[str] = None
+    guest_id: Optional[str] = None
+    status: str  # PAID | UNPAID
+    paid_amount: Optional[float] = None
+    amount: Optional[float] = None
+
+
+class SetGoalsRequest(BaseModel):
+    user_id: Optional[str] = None
+    guest_id: Optional[str] = None
+    goals: int
+
+
+class SetMatchScoreRequest(BaseModel):
+    blue_goals: int
+    red_goals: int
+
+
+class SetCaptainsRequest(BaseModel):
+    blue_captain_id: str
+    red_captain_id: str
+
+
+class PickPlayerRequest(BaseModel):
+    user_id: str
+
+
+class TransferPlayerRequest(BaseModel):
+    user_id: str
+    from_team: str  # BLUE | RED
+    to_team: str  # BLUE | RED
+
+
+class ReturnPlayerRequest(BaseModel):
+    user_id: str
+
+
+class LockTeamsRequest(BaseModel):
+    locked: bool
+
+
+class SetDraftVisibilityRequest(BaseModel):
+    draft_visible: bool
