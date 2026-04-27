@@ -21,6 +21,13 @@ from pymongo import MongoClient
 load_dotenv(Path(__file__).resolve().parents[2] / "frontend" / ".env")
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
+if os.environ.get("ALLOW_DESTRUCTIVE_E2E", "false").lower() not in ("1", "true", "yes"):
+    pytest.skip(
+        "test_matches is destructive (wipes groups/billing/memberships). "
+        "Set ALLOW_DESTRUCTIVE_E2E=true and point at a throwaway DB to run.",
+        allow_module_level=True,
+    )
+
 BASE_URL = os.environ["REACT_APP_BACKEND_URL"].rstrip("/")
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME = os.environ.get("DB_NAME", "footballchat")

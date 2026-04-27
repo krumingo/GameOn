@@ -11,9 +11,28 @@ import pytest
 BASE_URL = (os.environ.get("REACT_APP_BACKEND_URL") or
             "https://football-chat-api.preview.emergentagent.com").rstrip("/")
 
-DIT_GROUP_ID = "69ee4e4914834e35eac85c99"     # DIT2026 PRO/TRIAL
-DIT_MATCH_ID = "69ee4e4914834e35eac85cb2"      # UPCOMING SPLIT_WITH_CASH
-DIT_MATCH_ID_2 = "69ee4e4914834e35eac85cb3"    # UPCOMING
+def _dit_match_ids():
+    """Resolve current upcoming match ids in DIT2026 group dynamically."""
+    try:
+        gid = os.environ.get("TEST_DIT_GROUP_ID")
+        if not gid:
+            return ("69ee4e4914834e35eac85cb2", "69ee4e4914834e35eac85cb3")
+        tok = requests.post(f"{BASE_URL}/api/auth/super-test-login", timeout=20).json()["token"]
+        r = requests.get(f"{BASE_URL}/api/groups/{gid}/matches",
+                         headers={"Authorization": f"Bearer {tok}"}, timeout=20)
+        ms = r.json() if r.status_code == 200 else []
+        ids = [m["id"] for m in ms]
+        if len(ids) >= 2:
+            return (ids[0], ids[1])
+        if len(ids) == 1:
+            return (ids[0], ids[0])
+    except Exception:
+        pass
+    return ("69ee4e4914834e35eac85cb2", "69ee4e4914834e35eac85cb3")
+
+
+DIT_GROUP_ID = os.environ.get("TEST_DIT_GROUP_ID", "69ee4e4914834e35eac85c99")     # DIT2026 PRO/TRIAL
+DIT_MATCH_ID, DIT_MATCH_ID_2 = _dit_match_ids()
 SPORT_GROUP_ID_HINT = "SPORT26"                # FREE
 
 

@@ -16,8 +16,8 @@ import csv
 import pytest
 import requests
 
-SPORT26 = "69ee4e4914834e35eac85c96"  # FREE
-DIT2026 = "69ee4e4914834e35eac85c99"  # PRO/TRIAL
+SPORT26 = os.environ.get("TEST_SPORT_GROUP_ID", "69ee4e4914834e35eac85c96")  # FREE
+DIT2026 = os.environ.get("TEST_DIT_GROUP_ID", "69ee4e4914834e35eac85c99")  # PRO/TRIAL
 ADMIN_EMAIL = "admin@gameon.bg"
 ADMIN_PW = "admin_secure_password_2026!"
 

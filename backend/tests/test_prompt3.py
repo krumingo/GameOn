@@ -111,13 +111,23 @@ def test_billing_mark_paid(seed, super_headers):
     assert j["plan"] == "PRO"
     # restore: delete billing for free group via direct admin action -> use same pattern
     # Simply leave; it will not affect FREE-specific tests below because we now treat free_gid as PRO.
-    # To preserve FREE plan for other tests, we mark via mongosh.
-    import subprocess
-    subprocess.run(
-        ["mongosh", "footballchat", "--quiet", "--eval",
-         "db.billing.deleteMany({})"],
-        capture_output=True, timeout=10,
-    )
+    # To preserve FREE plan for other tests, delete billing only for the FREE seed group via Mongo driver.
+    try:
+        import os as _os
+        from pymongo import MongoClient
+        from bson import ObjectId
+        _c = MongoClient(_os.environ.get("MONGO_URL", "mongodb://localhost:27017"))
+        _db = _c[_os.environ.get("DB_NAME", "gameon_dev")]
+        _db.billing.delete_many({"group_id": ObjectId(seed["free_gid"])})
+        _c.close()
+    except Exception:
+        # Fallback to legacy mongosh path; harmless if mongosh missing.
+        import subprocess
+        subprocess.run(
+            ["mongosh", os.environ.get("DB_NAME", "gameon_dev"), "--quiet", "--eval",
+             f"db.billing.deleteOne({{group_id: ObjectId('{seed['free_gid']}')}})"],
+            capture_output=True, timeout=10,
+        )
 
 
 def test_billing_checkout_session_handles_stripe(seed, super_headers):

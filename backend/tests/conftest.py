@@ -15,6 +15,43 @@ if not BASE_URL:
     raise RuntimeError("REACT_APP_BACKEND_URL must be set")
 
 
+def _resolve_seed_group_ids():
+    """Look up the actual ObjectIds of seeded groups by entry_code.
+
+    The hardcoded IDs in older test files drift when the DB is reseeded with
+    new ObjectIds; this helper keeps tests stable across reseeds.
+    Returns a dict: {"DIT2026": "<oid>", "SPORT26": "<oid>"} (str). Falls back
+    to legacy hardcoded IDs if API is unreachable.
+    """
+    try:
+        # ensure seed exists
+        try:
+            requests.post(f"{BASE_URL}/api/dev/seed-demo-data", timeout=30)
+        except Exception:
+            pass
+        tok = requests.post(f"{BASE_URL}/api/auth/super-test-login", timeout=30).json()["token"]
+        groups = requests.get(
+            f"{BASE_URL}/api/groups/my",
+            headers={"Authorization": f"Bearer {tok}"},
+            timeout=30,
+        ).json()
+        out = {}
+        for g in groups or []:
+            ec = g.get("entry_code")
+            if ec in ("DIT2026", "SPORT26"):
+                out[ec] = g["id"]
+        return out
+    except Exception:
+        return {}
+
+
+_SEED_IDS = _resolve_seed_group_ids()
+if _SEED_IDS.get("DIT2026"):
+    os.environ["TEST_DIT_GROUP_ID"] = _SEED_IDS["DIT2026"]
+if _SEED_IDS.get("SPORT26"):
+    os.environ["TEST_SPORT_GROUP_ID"] = _SEED_IDS["SPORT26"]
+
+
 @pytest.fixture(scope="session")
 def base_url() -> str:
     return BASE_URL

@@ -6,6 +6,11 @@ Covers:
 - Super-test-login + /api/me GET/PATCH (id, not _id)
 - Groups CRUD, FREE plan limit, public, preview-by-code, points_config, categories
 - Memberships: add, remove, role change, guests, guest merge on /auth/join
+
+NOTE: This suite is DESTRUCTIVE — it wipes groups/memberships/billing in the
+configured DB. It is gated behind ALLOW_DESTRUCTIVE_E2E=true so that running
+it against the shared preview DB (gameon_dev) is opt-in. Without the flag the
+whole module is skipped, preserving the seed for prompt6/7/8/9/10 regression.
 """
 from __future__ import annotations
 
@@ -17,6 +22,13 @@ from datetime import datetime, timedelta, timezone
 import pytest
 import requests
 from pymongo import MongoClient
+
+if os.environ.get("ALLOW_DESTRUCTIVE_E2E", "false").lower() not in ("1", "true", "yes"):
+    pytest.skip(
+        "test_backend_e2e is destructive (wipes groups/billing). "
+        "Set ALLOW_DESTRUCTIVE_E2E=true and point at a throwaway DB to run.",
+        allow_module_level=True,
+    )
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 

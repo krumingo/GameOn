@@ -12,8 +12,8 @@ import pytest
 BASE_URL = (os.environ.get("REACT_APP_BACKEND_URL") or
             "https://football-chat-api.preview.emergentagent.com").rstrip("/")
 
-DIT_GROUP_ID = "69ee4e4914834e35eac85c99"     # PRO/TRIAL
-SPORT_GROUP_ID = "69ee4e4914834e35eac85c96"   # FREE
+DIT_GROUP_ID = os.environ.get("TEST_DIT_GROUP_ID", "69ee4e4914834e35eac85c99")     # PRO/TRIAL
+SPORT_GROUP_ID = os.environ.get("TEST_SPORT_GROUP_ID", "69ee4e4914834e35eac85c96")   # FREE
 
 
 @pytest.fixture(scope="module")
