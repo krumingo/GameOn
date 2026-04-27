@@ -192,3 +192,12 @@ credentials.json
 !.env.example
 google-services.json
 google-service-account.json
+-e 
+# Environment and credential files
+.env
+.env.*
+*.env
+credentials.json
+*.pem
+*.key
+.credentials
