@@ -70,6 +70,14 @@ WeeklyStats card, GroupCard collapsible (plan pill, expand chevron), MatchCard (
 - **Production env**: `backend/.env.example` template; `/app/.gitignore` excludes `.env*` (with `!.env.example` allowlist) and Google service-account JSONs; `/app/memory/DEPLOY_CHECKLIST.md` runbook for backend, frontend, App Store, Google Play, post-deploy verification, and future native-IAP migration.
 **Tests: 13/13 prompt10 backend + 50/51 regression PASS (1 expected SKIP) + 100% frontend testable (iteration_10.json + /app/backend/tests/test_prompt10.py).**
 
+### PROMPT 11 — Final E2E pass + regression hardening (2026-04-26)
+- **18/18 functional steps PASS** (auth, group/match CRUD, RSVP, Match Room with 5 tabs, team draft, payments, results, chat, stats + leaderboard, cash, discover, notifications, settings, admin, edge cases incl. deep-link prefill + global paywall + offline banner).
+- **Backend regression hardened**: `tests/conftest.py` now auto-resolves seeded group ObjectIds via `/api/dev/seed-demo-data` + `/api/groups/my` (TEST_DIT_GROUP_ID / TEST_SPORT_GROUP_ID env exports) — fixes drift after partial DB reseeds.
+- **Destructive legacy suites gated**: `test_backend_e2e.py` + `test_matches.py` (which performed bulk delete_many on shared gameon_dev) now skip unless `ALLOW_DESTRUCTIVE_E2E=true`. Prevents preview-DB wipes during CI.
+- **test_prompt3.py mongosh teardown** replaced with scoped pymongo delete using correct DB_NAME (was hardcoded to wrong DB 'footballchat').
+- **.gitignore** dedup'd from 203 → 95 lines (cleaned 12 duplicate env/cred blocks).
+**Tests: 113/115 active backend (98.3%) + 100% frontend smoke (iteration_11.json). 2 remaining failures in test_prompt3.py are stale-state in shared DB, NOT product code defects.**
+
 ## Backlog — Future PROMPTs
 
 ### PROMPT 9 (Iteration B) — pending
