@@ -6,8 +6,10 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { groupsApi, matchesApi } from '@/api/client';
 import { withRetry } from '@/utils/retry';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useAuthStore } from '@/store/authStore';
 import { GroupCard } from '@/components/GroupCard';
+import { SkeletonCard } from '@/components/SkeletonCard';
 import { WeeklyStats } from '@/components/WeeklyStats';
 import { SeasonBadge } from '@/components/SeasonBadge';
 import { GroupActionModal } from '@/components/GroupActionModal';
@@ -157,9 +159,7 @@ export default function MyScreen() {
       )}
 
       {loading ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>Зареждам...</Text>
-        </View>
+        <SkeletonCard count={2} style={{ marginTop: 8 }} />
       ) : groups.length === 0 ? (
         <View style={styles.empty} testID="my-empty-state">
           <View style={styles.emptyIconWrap}>
@@ -185,13 +185,14 @@ export default function MyScreen() {
         </View>
       ) : (
         groups.map((g, idx) => (
-          <GroupCard
-            key={g.id}
-            group={g}
-            currentUserId={user?.id}
-            onRsvpToggle={handleRsvpToggle}
-            defaultExpanded={idx === 0}
-          />
+          <Animated.View key={g.id} entering={FadeInDown.delay(idx * 60).duration(280)}>
+            <GroupCard
+              group={g}
+              currentUserId={user?.id}
+              onRsvpToggle={handleRsvpToggle}
+              defaultExpanded={idx === 0}
+            />
+          </Animated.View>
         ))
       )}
 

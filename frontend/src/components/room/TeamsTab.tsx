@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { matchesApi } from '@/api/client';
 import { GlassCard } from '@/components/GlassCard';
@@ -130,14 +131,11 @@ export const TeamsTab: React.FC<Props> = ({
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }} testID="teams-tab">
       {!locked ? (
-        <View style={[styles.turnBanner, { backgroundColor: `${turnColor}26`, borderColor: turnColor }]} testID="teams-turn">
-          <Text style={[styles.turnText, { color: turnColor }]}>
-            Ред на избор: {turn === 'BLUE' ? '🔵 СИНИТЕ' : '🔴 ЧЕРВЕНИТЕ'}
-          </Text>
-        </View>
+        <PulsingTurnBanner color={turnColor} turn={turn as 'BLUE' | 'RED'} />
       ) : (
         <View style={[styles.turnBanner, { backgroundColor: 'rgba(34,197,94,0.15)', borderColor: theme.colors.accent.success }]}>
-          <Text style={[styles.turnText, { color: theme.colors.accent.success }]}>Отборите са заключени ✓</Text>
+          <Ionicons name="lock-closed" size={18} color={theme.colors.accent.success} />
+          <Text style={[styles.turnText, { color: theme.colors.accent.success }]}>ОТБОРИТЕ СА ЗАКЛЮЧЕНИ</Text>
         </View>
       )}
 
@@ -221,6 +219,29 @@ const CaptainPicker: React.FC<any> = ({ value, onChange, options, colorAccent, t
   </View>
 );
 
+const PulsingTurnBanner: React.FC<{ color: string; turn: 'BLUE' | 'RED' }> = ({ color, turn }) => {
+  const opacity = useSharedValue(0.85);
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withTiming(1, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true,
+    );
+  }, [opacity]);
+  const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  return (
+    <Animated.View
+      style={[styles.turnBanner, animStyle, { backgroundColor: `${color}33`, borderColor: color, shadowColor: color, shadowOpacity: 0.5, shadowRadius: 12 }]}
+      testID="teams-turn"
+    >
+      <View style={[styles.turnDot, { backgroundColor: color }]} />
+      <Text style={[styles.turnText, { color }]}>
+        РЕД НА {turn === 'BLUE' ? 'СИНИТЕ' : 'ЧЕРВЕНИТЕ'}
+      </Text>
+    </Animated.View>
+  );
+};
+
 const TeamPanel: React.FC<any> = ({ label, color, players, captainId, canEdit, onReturn, onTransfer, otherTeam }) => (
   <GlassCard style={[styles.teamCard, { borderColor: color, borderWidth: 1 }]}>
     <Text style={[styles.teamHeader, { color }]}>{label} ({players.length})</Text>
@@ -230,7 +251,9 @@ const TeamPanel: React.FC<any> = ({ label, color, players, captainId, canEdit, o
         <View key={p.user_id || p.guest_id} style={styles.row}>
           <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', flex: 1 }}>
             {isCap && (
-              <View style={styles.cBadge}><Text style={styles.cBadgeText}>C</Text></View>
+              <View style={styles.cBadge} testID="captain-badge">
+                <Ionicons name="trophy" size={11} color="#000" />
+              </View>
             )}
             <Text style={[styles.name, { color }]}>{p.name}</Text>
           </View>
@@ -260,10 +283,11 @@ const TeamPanel: React.FC<any> = ({ label, color, players, captainId, canEdit, o
 
 const styles = StyleSheet.create({
   turnBanner: {
-    paddingVertical: 14, paddingHorizontal: 16, borderRadius: 12,
-    borderWidth: 1, marginBottom: 12, alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    padding: 14, borderRadius: 12, borderWidth: 1, marginBottom: 12,
   },
-  turnText: { fontSize: 16, fontWeight: '800', letterSpacing: 0.5 },
+  turnDot: { width: 10, height: 10, borderRadius: 5 },
+  turnText: { fontSize: 14, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase' },
   title: { color: theme.colors.text.primary, fontSize: 14, fontWeight: '700', marginBottom: 8 },
   label: { color: theme.colors.text.secondary, fontSize: 12, fontWeight: '600', marginBottom: 6 },
   capChip: {
@@ -276,7 +300,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
   name: { color: theme.colors.text.primary, fontSize: 14, fontWeight: '600' },
   guestBadge: { color: theme.colors.accent.secondary, fontSize: 11, fontWeight: '700' },
-  cBadge: { width: 20, height: 20, borderRadius: 10, backgroundColor: theme.colors.accent.gold, alignItems: 'center', justifyContent: 'center' },
+  cBadge: { width: 22, height: 22, borderRadius: 11, backgroundColor: theme.colors.accent.gold, alignItems: 'center', justifyContent: 'center', shadowColor: theme.colors.accent.gold, shadowOpacity: 0.6, shadowRadius: 6 },
   cBadgeText: { color: '#000', fontWeight: '900', fontSize: 11 },
   pickBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
   pickText: { color: '#fff', fontWeight: '700', fontSize: 12 },

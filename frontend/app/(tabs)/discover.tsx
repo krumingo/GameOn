@@ -9,6 +9,8 @@ import { GlassCard } from '@/components/GlassCard';
 import { ListingCard } from '@/components/ListingCard';
 import { ListingDetailModal } from '@/components/ListingDetailModal';
 import { CreateListingModal } from '@/components/CreateListingModal';
+import { SkeletonCard } from '@/components/SkeletonCard';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LoadingButton } from '@/components/LoadingButton';
 import { theme } from '@/theme/darkTheme';
 import { useTranslation } from 'react-i18next';
@@ -107,17 +109,17 @@ export default function DiscoverScreen() {
         testID="discover-list"
       >
         {loading ? (
-          <View style={styles.loading}>
-            <ActivityIndicator color={theme.colors.accent.primary} />
-          </View>
+          <SkeletonCard count={3} />
         ) : items.length === 0 ? (
           <GlassCard style={{ alignItems: 'center', padding: 32 }}>
             <Ionicons name="megaphone-outline" size={40} color={theme.colors.text.muted} />
             <Text style={styles.emptyText}>{t('discover.empty')}</Text>
           </GlassCard>
         ) : (
-          items.map((l) => (
-            <ListingCard key={l.id} listing={l} onPress={() => setSelectedId(l.id)} />
+          items.map((l, idx) => (
+            <Animated.View key={l.id} entering={FadeInDown.delay(idx * 50).duration(280)}>
+              <ListingCard listing={l} onPress={() => setSelectedId(l.id)} />
+            </Animated.View>
           ))
         )}
       </ScrollView>

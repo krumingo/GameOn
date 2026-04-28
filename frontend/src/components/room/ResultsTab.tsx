@@ -179,13 +179,13 @@ const PlayerGoals: React.FC<any> = ({ label, color, players, maxGoals, isAdmin, 
 );
 
 const styles = StyleSheet.create({
-  scoreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingVertical: 8 },
-  teamLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 1.5 },
-  scoreCtrl: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 },
+  scoreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingVertical: 14 },
+  scoreCtrl: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
   scoreBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.background.input, alignItems: 'center', justifyContent: 'center' },
   scoreBtnText: { color: theme.colors.text.primary, fontSize: 20, fontWeight: '700' },
-  scoreNum: { fontSize: 36, fontWeight: '900', minWidth: 40, textAlign: 'center' },
-  colon: { color: theme.colors.text.muted, fontSize: 32, fontWeight: '300' },
+  scoreNum: { fontSize: 56, fontWeight: '900', minWidth: 64, textAlign: 'center', fontVariant: ['tabular-nums'] },
+  colon: { color: theme.colors.text.muted, fontSize: 36, fontWeight: '300', opacity: 0.5, marginHorizontal: 8 },
+  teamLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 2, textTransform: 'uppercase' },
   teamSection: { fontSize: 13, fontWeight: '800', marginBottom: 8, letterSpacing: 1 },
   goalRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
   goalName: { fontSize: 14, fontWeight: '600' },

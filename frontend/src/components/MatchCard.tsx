@@ -104,9 +104,17 @@ const MatchCardImpl: React.FC<Props> = ({
   };
 
   const goingNames = rsvpList.filter((r) => true).slice(0, 5);
+  const capLimit = match.player_limit ?? 14;
+  const capPct = Math.min(1, Math.max(0, match.going_count / capLimit));
+  const capBarColor =
+    capPct >= 1 ? theme.colors.accent.danger
+    : capPct >= 0.9 ? '#F59E0B'
+    : capPct >= 0.7 ? '#F59E0B'
+    : theme.colors.accent.primary;
 
   return (
     <GlassCard
+      glow={isGoing ? theme.colors.accent.primary : undefined}
       style={[styles.card, isGoing && { borderLeftColor: theme.colors.accent.success, borderLeftWidth: 4 }]}
       testID={`match-card-${match.id}`}
     >
@@ -155,6 +163,12 @@ const MatchCardImpl: React.FC<Props> = ({
             </View>
           )}
         </View>
+
+        {!isCancelled && (
+          <View style={styles.capBarTrack} testID={`cap-bar-${match.id}`}>
+            <View style={[styles.capBarFill, { width: `${capPct * 100}%`, backgroundColor: capBarColor }]} />
+          </View>
+        )}
 
         <Text style={styles.price}>
           {(match.price_per_player ?? 0) > 0
@@ -235,8 +249,8 @@ const MatchCardImpl: React.FC<Props> = ({
 const styles = StyleSheet.create({
   card: { marginBottom: 12 },
   headerRow: { flexDirection: 'row', alignItems: 'flex-start' },
-  title: { color: theme.colors.text.primary, fontSize: 16, fontWeight: '700' },
-  subTitle: { color: theme.colors.text.secondary, fontSize: 13, marginTop: 2 },
+  title: { color: theme.colors.text.primary, fontSize: 16, fontWeight: '700', letterSpacing: -0.3 },
+  subTitle: { color: theme.colors.text.secondary, fontSize: 13, marginTop: 2, fontWeight: '500' },
   muted: { color: theme.colors.text.muted, fontWeight: '400' },
   editBtn: {
     width: 28, height: 28, borderRadius: 14,
@@ -249,7 +263,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: theme.colors.background.input,
   },
-  capText: { color: theme.colors.text.primary, fontWeight: '700', fontSize: 13 },
+  capText: { color: theme.colors.text.primary, fontWeight: '800', fontSize: 13, fontVariant: ['tabular-nums'] },
   metaText: { color: theme.colors.text.secondary, fontSize: 13, fontWeight: '600' },
   pill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
   weeklyPill: {
@@ -258,7 +272,13 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: theme.colors.border.primary,
   },
   pillText: { fontSize: 11, fontWeight: '700', color: theme.colors.text.secondary },
-  price: { color: theme.colors.text.muted, fontSize: 12, marginTop: 8 },
+  price: { color: theme.colors.accent.gold, fontSize: 13, fontWeight: '700', marginTop: 10, fontVariant: ['tabular-nums'] },
+  capBarTrack: {
+    height: 3, borderRadius: 2, marginTop: 10,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    overflow: 'hidden',
+  },
+  capBarFill: { height: '100%', borderRadius: 2 },
   players: { color: theme.colors.text.secondary, fontSize: 12, marginTop: 6 },
   playerName: { color: theme.colors.text.secondary },
   rsvpRow: { flexDirection: 'row', gap: 8, marginTop: 12, alignItems: 'center' },

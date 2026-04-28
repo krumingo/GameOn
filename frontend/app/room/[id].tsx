@@ -382,8 +382,14 @@ const styles = StyleSheet.create({
   },
   goingText: { color: theme.colors.accent.success, fontWeight: '700' },
   tabsBar: { gap: 6, paddingHorizontal: 4, paddingVertical: 12 },
-  tabBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
-  tabBtnActive: { backgroundColor: theme.colors.background.card, borderWidth: 1, borderColor: theme.colors.accent.primary },
-  tabText: { color: theme.colors.text.muted, fontSize: 13, fontWeight: '700' },
-  tabTextActive: { color: theme.colors.accent.primary },
+  tabBtn: {
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+    backgroundColor: 'transparent',
+  },
+  tabBtnActive: {
+    backgroundColor: 'rgba(59,130,246,0.18)',
+    borderWidth: 1, borderColor: theme.colors.accent.primary,
+  },
+  tabText: { color: theme.colors.text.muted, fontSize: 13, fontWeight: '600', letterSpacing: 0.2 },
+  tabTextActive: { color: theme.colors.accent.primary, fontWeight: '800' },
 });

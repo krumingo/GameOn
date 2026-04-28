@@ -78,6 +78,20 @@ WeeklyStats card, GroupCard collapsible (plan pill, expand chevron), MatchCard (
 - **.gitignore** dedup'd from 203 → 95 lines (cleaned 12 duplicate env/cred blocks).
 **Tests: 113/115 active backend (98.3%) + 100% frontend smoke (iteration_11.json). 2 remaining failures in test_prompt3.py are stale-state in shared DB, NOT product code defects.**
 
+### PROMPT 12 — Visual polish + Store Submission (2026-04-28)
+- **GlassCard rebuild**: `expo-linear-gradient` overlay (135deg, rgba(255,255,255,0.06) → 0.015) + `backdropFilter: blur(14px)` on web + tighter shadow + optional accent `glow` prop (uses boxShadow halo on web).
+- **LoadingButton gradient**: variants primary/success/danger/outline rendered via LinearGradient (no plain backgroundColor) + Light haptic on press.
+- **MatchCard improvements**: capacity progress bar (cap-bar-{id}) auto-coloured by % full (blue → amber → red), accent glow when going, tabular-nums for prices, sharper title typography (-0.3 letter-spacing).
+- **Match Room tabs**: pill-style active indicator with accent border + bold text (no underline).
+- **TeamsTab dramatic visuals**: pulsing turn banner ("РЕД НА СИНИТЕ" / "ЧЕРВЕНИТЕ") with animated opacity loop + dot indicator + colour glow; locked state shows green lock pill; trophy 🏆 captain badge with gold halo replaces text 'C'.
+- **ResultsTab score**: 56px / weight 900 / tabular-nums numbers; uppercase 2-letter-spaced "СИНИ" / "ЧЕРВЕНИ" labels; 36px muted colon at 0.5 opacity.
+- **SkeletonCard** new component with pulse animation (Reanimated `withRepeat` + `withTiming`) — used in /(tabs)/my and /(tabs)/discover loading states (replaces "Зареждам…" placeholder).
+- **Card stagger animations**: Reanimated `FadeInDown.delay(idx * 60).duration(280)` applied to GroupCard (my.tsx) and ListingCard (discover.tsx) lists.
+- **App Store assets**: 7 screenshot mock-ups (1284×2778) generated via Pillow at `/app/frontend/assets/screenshots/screenshot_01..07.png` with iPhone-frame mock content (Login, Profile+Stats, Match Room, Team Draft, Leaderboard, Cash, Discover) + `/app/memory/STORE_METADATA.md` (BG title, description, keywords, what's new, reviewer notes, data-safety table).
+- **CI workflow** at `/app/.github/workflows/test.yml` — backend pytest against ephemeral MongoDB 7 service container + frontend ESLint with `--max-warnings=0`.
+- **theme.fontWeight** tokens added (regular/medium/semibold/bold/heavy) for consistency.
+**Tests: lint 0 issues + 3 mobile-view smoke screenshots (My / Notifications / Stats) confirm gradient cards, pill tabs, capacity bars, gradient buttons, skeleton loaders all render correctly without console errors.**
+
 ## Backlog — Future PROMPTs
 
 ### PROMPT 9 (Iteration B) — pending
