@@ -6,6 +6,7 @@ import { matchesApi } from '@/api/client';
 import { GlassCard } from '@/components/GlassCard';
 import { LoadingButton } from '@/components/LoadingButton';
 import { PaywallOverlay } from '@/components/PaywallOverlay';
+import { Avatar } from '@/components/Avatar';
 import { theme } from '@/theme/darkTheme';
 
 const PRO_PLANS = ['PRO', 'TRIAL', 'GRACE'];
@@ -130,12 +131,29 @@ export const TeamsTab: React.FC<Props> = ({
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }} testID="teams-tab">
+      {/* Score counter */}
+      <View style={styles.scoreCounter} testID="teams-score-counter">
+        <View style={[styles.teamScoreBox, { borderColor: theme.colors.accent.blue_team }]}>
+          <View style={[styles.teamDot, { backgroundColor: theme.colors.accent.blue_team }]} />
+          <Text style={[styles.teamScoreNum, { color: theme.colors.accent.blue_team }]}>
+            {(data.blue_players || []).length}
+          </Text>
+        </View>
+        <Text style={styles.scoreVs}>vs</Text>
+        <View style={[styles.teamScoreBox, { borderColor: theme.colors.accent.red_team }]}>
+          <Text style={[styles.teamScoreNum, { color: theme.colors.accent.red_team }]}>
+            {(data.red_players || []).length}
+          </Text>
+          <View style={[styles.teamDot, { backgroundColor: theme.colors.accent.red_team }]} />
+        </View>
+      </View>
+
       {!locked ? (
         <PulsingTurnBanner color={turnColor} turn={turn as 'BLUE' | 'RED'} />
       ) : (
-        <View style={[styles.turnBanner, { backgroundColor: 'rgba(34,197,94,0.15)', borderColor: theme.colors.accent.success }]}>
-          <Ionicons name="lock-closed" size={18} color={theme.colors.accent.success} />
-          <Text style={[styles.turnText, { color: theme.colors.accent.success }]}>ОТБОРИТЕ СА ЗАКЛЮЧЕНИ</Text>
+        <View style={[styles.lockedOverlay]} testID="teams-locked">
+          <Ionicons name="lock-closed" size={20} color={theme.colors.accent.success} />
+          <Text style={styles.lockedText}>ОТБОРИТЕ СА ЗАКЛЮЧЕНИ</Text>
         </View>
       )}
 
@@ -161,7 +179,10 @@ export const TeamsTab: React.FC<Props> = ({
           <Text style={styles.title}>Налични играчи ({(data.available_players || []).length})</Text>
           {(data.available_players || []).map((p: any) => (
             <View key={p.user_id || p.guest_id} style={styles.row} testID={`avail-${p.user_id || p.guest_id}`}>
-              <Text style={styles.name}>{p.name}{p.is_guest && <Text style={styles.guestBadge}>  ГОСТ</Text>}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                <Avatar name={p.name} size={28} />
+                <Text style={styles.name} numberOfLines={1}>{p.name}{p.is_guest && <Text style={styles.guestBadge}>  ГОСТ</Text>}</Text>
+              </View>
               {(isAdmin || (currentUserId && (td.blue_captain_id === currentUserId || td.red_captain_id === currentUserId))) && (
                 <TouchableOpacity
                   onPress={() => handlePick(p.user_id || p.guest_id)}
@@ -243,19 +264,25 @@ const PulsingTurnBanner: React.FC<{ color: string; turn: 'BLUE' | 'RED' }> = ({ 
 };
 
 const TeamPanel: React.FC<any> = ({ label, color, players, captainId, canEdit, onReturn, onTransfer, otherTeam }) => (
-  <GlassCard style={[styles.teamCard, { borderColor: color, borderWidth: 1 }]}>
-    <Text style={[styles.teamHeader, { color }]}>{label} ({players.length})</Text>
+  <GlassCard style={[styles.teamCard, { borderColor: color, borderWidth: 1.5 }]}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+      <Text style={[styles.teamHeader, { color }]}>{label}</Text>
+      <View style={[styles.teamCountPill, { backgroundColor: `${color}22`, borderColor: `${color}66` }]}>
+        <Text style={[styles.teamCountText, { color }]}>{players.length}</Text>
+      </View>
+    </View>
     {players.map((p: any) => {
       const isCap = p.user_id && p.user_id === captainId;
       return (
         <View key={p.user_id || p.guest_id} style={styles.row}>
-          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', flex: 1 }}>
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', flex: 1 }}>
+            <Avatar name={p.name} size={isCap ? 32 : 28} color={isCap ? color : undefined} />
+            <Text style={[styles.name, { color }, isCap && { fontSize: 15, fontWeight: '800' }]} numberOfLines={1}>
+              {p.name}
+            </Text>
             {isCap && (
-              <View style={styles.cBadge} testID="captain-badge">
-                <Ionicons name="trophy" size={11} color="#000" />
-              </View>
+              <Text style={styles.crown} testID="captain-badge">👑</Text>
             )}
-            <Text style={[styles.name, { color }]}>{p.name}</Text>
           </View>
           {canEdit && !isCap && (
             <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -282,6 +309,29 @@ const TeamPanel: React.FC<any> = ({ label, color, players, captainId, canEdit, o
 );
 
 const styles = StyleSheet.create({
+  scoreCounter: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16,
+    paddingVertical: 12, marginBottom: 12,
+  },
+  teamScoreBox: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 18, paddingVertical: 8,
+    borderRadius: 14, borderWidth: 2,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  teamScoreNum: { fontSize: 28, fontWeight: '900', fontVariant: ['tabular-nums'] },
+  teamDot: { width: 12, height: 12, borderRadius: 6 },
+  scoreVs: { color: theme.colors.text.muted, fontSize: 14, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+
+  lockedOverlay: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    padding: 14, borderRadius: 14,
+    backgroundColor: 'rgba(34,197,94,0.10)',
+    borderWidth: 1, borderColor: 'rgba(34,197,94,0.5)',
+    marginBottom: 12,
+  },
+  lockedText: { color: theme.colors.accent.success, fontSize: 13, fontWeight: '800', letterSpacing: 1.2 },
+
   turnBanner: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
     padding: 14, borderRadius: 12, borderWidth: 1, marginBottom: 12,
@@ -296,10 +346,13 @@ const styles = StyleSheet.create({
   },
   capChipText: { color: theme.colors.text.primary, fontSize: 13, fontWeight: '600' },
   teamCard: { marginBottom: 12 },
-  teamHeader: { fontSize: 13, fontWeight: '800', marginBottom: 8, letterSpacing: 1 },
+  teamHeader: { fontSize: 14, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase' },
+  teamCountPill: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999, borderWidth: 1 },
+  teamCountText: { fontSize: 13, fontWeight: '900', fontVariant: ['tabular-nums'] },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
   name: { color: theme.colors.text.primary, fontSize: 14, fontWeight: '600' },
   guestBadge: { color: theme.colors.accent.secondary, fontSize: 11, fontWeight: '700' },
+  crown: { fontSize: 18, marginLeft: 2 },
   cBadge: { width: 22, height: 22, borderRadius: 11, backgroundColor: theme.colors.accent.gold, alignItems: 'center', justifyContent: 'center', shadowColor: theme.colors.accent.gold, shadowOpacity: 0.6, shadowRadius: 6 },
   cBadgeText: { color: '#000', fontWeight: '900', fontSize: 11 },
   pickBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },

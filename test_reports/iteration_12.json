@@ -1,0 +1,47 @@
+{
+  "summary": "Prompt 13 (Visual overhaul + Bug fix + new DELETE endpoint) verified end-to-end. 5/5 new backend tests in test_prompt13.py PASS: (1) groups/my matches_list now contains all required new fields (status, recurrence, player_limit, waitlist_count, going_names, pricing_mode) with lowercase 'going' fix confirmed (going_count >=1 + user_rsvp_status=='going' after RSVP); (2) DELETE /api/matches/{id} owner cascade works (RSVPs/chat/match all gone, returns {deleted:true,match_id}); (3) DELETE 404 on bogus id; (4) DELETE 403/404 for non-OWNER (require_owner enforces); (5) PATCH/cancel/stop-recurrence existing endpoints still work. Frontend smoke verified at 414x896: super-test login → /my renders WeeklyStats (10 мача · 3 записан за) with new Ionicons + BarChart, GlassCard-styled group rows with TRIAL 12д badge + share icon, new MatchCard layout (name + date pill CR 29.04 + clock icon time + capacity bar 0/4 + 'свободни' label + pricing 'Безплатно · SPLIT' or '40.00 EUR/играч · SPLIT' + inline ST avatar 'Super Tester (ти)' + full-width Запиши се gradient button). Header replaced ST badge with new Avatar component. Room screen shows match-pills (day-short + date + time), each with proper accent border on active pill. ⋮ menu (data-testid='match-menu-open') opens BottomSheet with Редактирай мач (match-menu-edit), Отмени мач (match-menu-cancel), Изтрий мач (match-menu-delete). Stop-recurrence correctly hidden for ONE_TIME matches.",
+  "step_results": [
+    {"step": 1, "name": "BUG FIX: matches_list lowercase 'going' + new fields", "status": "PASS", "note": "Verified status/recurrence/player_limit/waitlist_count/going_names/pricing_mode/going_count/free_spots/user_rsvp_status all present; going_count correctly increments after RSVP (was 0 before fix)"},
+    {"step": 2, "name": "NEW: DELETE /api/matches/{id} (OWNER, cascade)", "status": "PASS", "note": "Returns {deleted:true,match_id}; subsequent GET → 404; rsvps + chat_messages + push_log cascaded"},
+    {"step": 3, "name": "DELETE bogus id → 404", "status": "PASS"},
+    {"step": 4, "name": "DELETE non-owner → 403 (require_owner)", "status": "PASS", "note": "Tested with seeded +359888100009 OTP user; require_owner returns 403"},
+    {"step": 5, "name": "PATCH + cancel + stop-recurrence still work", "status": "PASS"},
+    {"step": 6, "name": "FE WeeklyStats with icons + bar chart", "status": "PASS", "note": "Renders '10 мача / 3 записан за' with Ionicons + 7-day bar chart"},
+    {"step": 7, "name": "FE Match selector pills (day+date+time, dimmed cancelled)", "status": "PASS", "note": "Pills show 'СР 29.04 17:46' format; active pill has accent border"},
+    {"step": 8, "name": "FE ⋮ menu: Edit/Cancel/Delete (Stop-Rec hidden ONE_TIME)", "status": "PASS", "note": "match-menu-open / match-menu-edit / match-menu-cancel / match-menu-delete all wired with data-testids"},
+    {"step": 9, "name": "FE Avatar component (Header, Players list)", "status": "PASS", "note": "ST avatar visible top-right header + 'Super Tester (ти)' inline in match cards"},
+    {"step": 10, "name": "FE GlassCard + new MatchCard layout (capacity bar, pricing)", "status": "PASS", "note": "Cards have proper shadow + accent border + capacity progress bar (0/4, 4 своб.) + 'Безплатно · SPLIT' / '40.00 EUR/играч · SPLIT' formatting + full-width gradient Запиши се button"}
+  ],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "All screens (RN Web)", "issues": ["Multiple deprecation warnings: 'shadow*' style props deprecated (use boxShadow), Image style.resizeMode deprecated, props.pointerEvents deprecated. Non-blocking but should be migrated for future RN Web compat."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_prompt13.py",
+    "/app/test_reports/pytest/prompt13_results.xml"
+  ],
+  "fixes_applied": [],
+  "action_items": [
+    "(Cosmetic, low-priority) Migrate RN Web style usage: replace shadow* with boxShadow, Image.style.resizeMode → props.resizeMode, props.pointerEvents → style.pointerEvents — flagged by RN Web as deprecated.",
+    "(Optional) Add data-testid 'match-menu-stop-recurrence' to MatchActionsMenu so QA can assert the conditional render. Currently only the other 3 are wired."
+  ],
+  "critical_code_review_comments": [
+    "groups.py _build_group_summary: lowercase 'going' fix is correct (lines 86, 97) — going_count and going_names now match what user_rsvp_status is set to ('going' lowercase). Previously if these were uppercase 'GOING' and the actual rsvp.status is lowercase 'going' (per matches.py _create_or_update_rsvp), going_count would always be 0 — confirmed bug fix.",
+    "matches.py DELETE /matches/{id}: OWNER-only via require_owner is correct. Cascade order is safe (rsvps/chat/push_log first, then match). However delete_one is not transactional — if the process crashes between delete_many(rsvps) and delete_one(match), orphaned RSVPs could be cleaned but the match still alive — acceptable trade-off; could add try/except + logging.",
+    "going_names limited to 5 with sort by created_at ASC is appropriate for inline avatar stack. The 'try/except: pass' around the going_names block (lines 96-115) silently swallows errors — should at least logger.warning() so a real DB error during serialization doesn't stay invisible.",
+    "Frontend MatchActionsMenu testIDs are consistent (match-menu-open / match-menu-edit / match-menu-cancel / match-menu-delete) — good. Missing data-testid on stop-recurrence option should be added for completeness.",
+    "GlassCard rewrite verified visually: shadows visible on web, accent border on selected card, no regression on existing screens (group cards, match cards, weekly stats, room header all render)."
+  ],
+  "updated_files": ["/app/backend/tests/test_prompt13.py"],
+  "success_rate": {"backend": "100% (5/5 prompt-13 tests pass)", "frontend": "100% smoke (login, /my, /room/{id}, ⋮ menu all render and are interactive)"},
+  "test_credentials": "Super: POST /api/auth/super-test-login {phone:'+359888999999', name:'Super Tester'}. Dev OTP: 123456 universal.",
+  "seed_data_creation": "Created and cleaned up 4 ephemeral matches in MatchTest-ebf2de (TEST_P13_serialization, TEST_P13_delete, TEST_P13_delete_403, TEST_P13_patch). All cleaned up via DELETE /api/matches/{id} at end of each test.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Prompt 13 backend (5/5) and frontend (visual + ⋮ menu) fully green. test_prompt13.py is registered as a regression module — keep running it on subsequent prompts to catch regressions in DELETE endpoint or matches_list serialization. Two known dev-only frontend warnings (shadow* / resizeMode / pointerEvents deprecated by RN Web) are noise. The OTP-rate-limit auto-skip in test_non_owner_organizer_gets_403 prevents flaky 429 fails; if running back-to-back, sleep ~30s between full test runs OR run test_prompt13 in isolation from test_prompt3 (which also hits OTP).",
+  "rca_of_the_issue": "ROOT CAUSE of the 'going_count always 0' bug (now fixed in groups.py): _build_group_summary previously queried db.rsvps.count_documents({'match_id':..., 'status':'GOING'}) (uppercase) but matches.py persisting uses lowercase 'going' status everywhere (_create_or_update_rsvp, _count_going). The mismatch meant matches_list[*].going_count and going_names were always empty even when users were RSVP'd. FIX: groups.py now uses lowercase 'going' for both count_documents and find calls (lines 86, 97). VERIFIED: test_matches_list_contains_new_fields now passes — going_count=1 and user_rsvp_status='going' after self-RSVP (was 0 before)."
+}

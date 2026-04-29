@@ -41,12 +41,18 @@ export const WeeklyStats: React.FC<Props> = ({
       </View>
 
       <View style={styles.numbersRow}>
-        <View>
-          <Text style={[styles.bigNum, { color: theme.colors.accent.primary }]}>{totalThisWeek}</Text>
-          <Text style={styles.numLabel}>мача</Text>
+        <View style={styles.numCol}>
+          <View style={styles.numIconRow}>
+            <Ionicons name="football-outline" size={14} color={theme.colors.accent.primary} />
+            <Text style={[styles.bigNum, { color: theme.colors.accent.primary }]}>{totalThisWeek}</Text>
+          </View>
+          <Text style={styles.numLabel}>{totalThisWeek === 1 ? 'мач' : 'мача'}</Text>
         </View>
-        <View>
-          <Text style={[styles.bigNum, { color: theme.colors.accent.success }]}>{joinedThisWeek}</Text>
+        <View style={styles.numCol}>
+          <View style={styles.numIconRow}>
+            <Ionicons name="checkmark-circle-outline" size={14} color={theme.colors.accent.success} />
+            <Text style={[styles.bigNum, { color: theme.colors.accent.success }]}>{joinedThisWeek}</Text>
+          </View>
           <Text style={styles.numLabel}>записан за</Text>
         </View>
       </View>
@@ -105,6 +111,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   numbersRow: { flexDirection: 'row', gap: 32, marginTop: 12 },
+  numCol: {},
+  numIconRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   bigNum: { fontSize: 28, fontWeight: '800' },
   numLabel: { color: theme.colors.text.muted, fontSize: 12 },
   barsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 16, height: 70 },

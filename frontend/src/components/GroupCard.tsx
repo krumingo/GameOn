@@ -66,12 +66,23 @@ const GroupCardImpl: React.FC<Props> = ({ group, currentUserId, onRsvpToggle, de
                   </TouchableOpacity>
                 )}
               </View>
-              <Text style={styles.meta}>
-                {group.matches_count} мача · {group.members_count} участници
-              </Text>
+              <View style={styles.metaRow}>
+                <Ionicons name="football-outline" size={12} color={theme.colors.text.muted} />
+                <Text style={styles.meta}>
+                  {group.matches_count} {group.matches_count === 1 ? 'мач' : 'мача'}
+                </Text>
+                <Text style={[styles.meta, { marginHorizontal: 6 }]}>·</Text>
+                <Ionicons name="people-outline" size={12} color={theme.colors.text.muted} />
+                <Text style={styles.meta}>
+                  {group.members_count} {group.members_count === 1 ? 'участник' : 'участници'}
+                </Text>
+              </View>
             </View>
             <View style={styles.headerRight}>
-              <View style={[styles.planPill, { backgroundColor: planConfig.bg }]}>
+              <View style={[styles.planPill, { backgroundColor: planConfig.bg, borderColor: `${planConfig.color}40`, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                {group.plan === 'PRO' && <Ionicons name="star" size={11} color={planConfig.color} />}
+                {group.plan === 'TRIAL' && <Ionicons name="rocket-outline" size={11} color={planConfig.color} />}
+                {group.plan === 'FREE' && <Ionicons name="lock-open-outline" size={11} color={planConfig.color} />}
                 <Text style={[styles.planText, { color: planConfig.color }]}>
                   {planConfig.label}
                   {group.plan === 'TRIAL' && group.trial_days_left != null
@@ -118,6 +129,7 @@ const GroupCardImpl: React.FC<Props> = ({ group, currentUserId, onRsvpToggle, de
                   <MatchCard
                     key={m.id}
                     match={m}
+                    rsvpList={m.going_names || []}
                     currentUserId={currentUserId}
                     isOrganizer={isOrganizer}
                     currency={currency}
@@ -156,7 +168,8 @@ const styles = StyleSheet.create({
     fontWeight: '700', letterSpacing: 1.5,
   },
   name: { color: theme.colors.text.primary, fontSize: 17, fontWeight: '700', marginTop: 2 },
-  meta: { color: theme.colors.text.muted, fontSize: 12, marginTop: 4 },
+  meta: { color: theme.colors.text.muted, fontSize: 12, fontWeight: '500' },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
   headerRight: { alignItems: 'flex-end' },
   planPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
   planText: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },

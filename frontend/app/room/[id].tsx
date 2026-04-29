@@ -16,18 +16,20 @@ import { ResultsTab } from '@/components/room/ResultsTab';
 import { TeamsTab } from '@/components/room/TeamsTab';
 import { ChatTab } from '@/components/room/ChatTab';
 import { CreateMatchModal } from '@/components/room/CreateMatchModal';
+import { MatchActionsMenu } from '@/components/MatchActionsMenu';
 import { ShareGroupModal } from '@/components/ShareGroupModal';
 import { theme } from '@/theme/darkTheme';
 
-const TABS = [
-  { k: 'players', label: 'Играчи' },
-  { k: 'payments', label: 'Плащания' },
-  { k: 'results', label: 'Резултати' },
-  { k: 'teams', label: 'Отбори' },
-  { k: 'chat', label: 'Чат' },
+const TABS: Array<{ k: string; label: string; icon: any }> = [
+  { k: 'players', label: 'Играчи', icon: 'people-outline' },
+  { k: 'payments', label: 'Плащания', icon: 'card-outline' },
+  { k: 'results', label: 'Резултати', icon: 'football-outline' },
+  { k: 'teams', label: 'Отбори', icon: 'flag-outline' },
+  { k: 'chat', label: 'Чат', icon: 'chatbubble-outline' },
 ];
 
 const DAY_NAMES = ['Неделя', 'Понеделник', 'Вторник', 'Сряда', 'Четвъртък', 'Петък', 'Събота'];
+const DAY_SHORT_BG = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 const MONTH_NAMES = ['януари', 'февруари', 'март', 'април', 'май', 'юни', 'юли', 'август', 'септември', 'октомври', 'ноември', 'декември'];
 
 function fmtDate(iso: string): string {
@@ -35,6 +37,18 @@ function fmtDate(iso: string): string {
     const d = new Date(iso);
     return `${DAY_NAMES[d.getDay()]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}, ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
   } catch { return iso; }
+}
+
+function fmtSelectorPill(iso: string): { day: string; date: string; time: string } {
+  try {
+    const d = new Date(iso);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return {
+      day: DAY_SHORT_BG[d.getDay()],
+      date: `${pad(d.getDate())}.${pad(d.getMonth() + 1)}`,
+      time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+    };
+  } catch { return { day: '', date: '', time: '' }; }
 }
 
 export default function MatchRoom() {
@@ -52,6 +66,7 @@ export default function MatchRoom() {
   const [refreshing, setRefreshing] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [groupName, setGroupName] = useState<string>('');
   const [groupEntryCode, setGroupEntryCode] = useState<string>('');
 
@@ -190,26 +205,32 @@ export default function MatchRoom() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.selector} testID="match-selector">
         {matches.map((m) => {
           const sel = m.id === match?.id;
+          const p = fmtSelectorPill(m.start_datetime);
+          const cancelled = m.status === 'CANCELLED';
           return (
             <TouchableOpacity
               key={m.id}
               onPress={() => handleSelectMatch(m.id)}
-              style={[styles.selectorPill, sel && { borderColor: theme.colors.accent.primary, backgroundColor: 'rgba(59,130,246,0.15)' }]}
+              style={[
+                styles.selectorPill,
+                sel && styles.selectorPillActive,
+                cancelled && { opacity: 0.45 },
+              ]}
               testID={`selector-${m.id}`}
             >
-              <Text style={[styles.selectorText, sel && { color: theme.colors.accent.primary }]}>
-                {fmtDate(m.start_datetime).split(',')[0]}
-              </Text>
+              <Text style={[styles.selectorDay, sel && styles.selectorDayActive]}>{p.day}</Text>
+              <Text style={[styles.selectorDate, sel && { color: '#fff' }]}>{p.date}</Text>
+              <Text style={[styles.selectorTime, sel && { color: theme.colors.accent.primary }]}>{p.time}</Text>
             </TouchableOpacity>
           );
         })}
         {isAdmin && (
           <TouchableOpacity
             onPress={() => setCreateOpen(true)}
-            style={[styles.selectorPill, { backgroundColor: theme.colors.accent.primary, borderColor: theme.colors.accent.primary }]}
+            style={[styles.selectorPill, styles.selectorPillNew]}
             testID="selector-new"
           >
-            <Ionicons name="add" size={16} color="#fff" />
+            <Ionicons name="add" size={18} color="#fff" />
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -219,16 +240,42 @@ export default function MatchRoom() {
           contentContainerStyle={{ padding: 16 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); refresh(); }} tintColor="#fff" />}
         >
-          <GlassCard>
-            <Text style={styles.matchTitle} testID="match-title">{match.name}</Text>
-            <Text style={styles.matchDate}>{fmtDate(match.start_datetime)}</Text>
-            {match.venue && (
-              <TouchableOpacity onPress={() => match.location_link && Linking.openURL(match.location_link)} testID="match-venue">
-                <Text style={styles.matchVenue}>📍 {match.venue}{match.location_link ? ' →' : ''}</Text>
-              </TouchableOpacity>
-            )}
+          <GlassCard
+            active={status === 'going'}
+            activeColor={theme.colors.accent.success}
+            glow={status === 'going' ? theme.colors.accent.success : undefined}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.matchTitle} testID="match-title">{match.name}</Text>
+                <View style={styles.iconLine}>
+                  <Ionicons name="calendar-outline" size={14} color={theme.colors.text.muted} />
+                  <Text style={styles.matchDate}>{fmtDate(match.start_datetime)}</Text>
+                </View>
+                {match.venue ? (
+                  <TouchableOpacity
+                    onPress={() => match.location_link && Linking.openURL(match.location_link)}
+                    style={styles.iconLine}
+                    testID="match-venue"
+                  >
+                    <Ionicons name="location-outline" size={14} color={theme.colors.accent.primary} />
+                    <Text style={styles.matchVenue}>{match.venue}{match.location_link ? ' →' : ''}</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+              {isAdmin && (
+                <TouchableOpacity
+                  onPress={() => setMenuOpen(true)}
+                  style={styles.menuBtn}
+                  testID="match-menu-open"
+                >
+                  <Ionicons name="ellipsis-vertical" size={18} color={theme.colors.text.primary} />
+                </TouchableOpacity>
+              )}
+            </View>
             <View style={styles.metaRow}>
-              <View style={styles.capBadge}>
+              <View style={styles.metaPill}>
+                <Ionicons name="people-outline" size={13} color={theme.colors.text.secondary} />
                 <Text style={styles.capText}>{match.going_count}/{match.player_limit ?? 14}</Text>
               </View>
               {isCancelled ? (
@@ -238,18 +285,27 @@ export default function MatchRoom() {
                   </Text>
                 </View>
               ) : (
-                <Text style={{ color: theme.colors.text.secondary, fontSize: 13 }}>
+                <Text style={{ color: theme.colors.text.secondary, fontSize: 13, fontWeight: '600' }}>
                   {match.free_spots > 0 ? `${match.free_spots} свободни` : 'Пълен'}
                   {(match.waitlist_count ?? 0) > 0 ? ` · Чакащи: ${match.waitlist_count}` : ''}
                 </Text>
               )}
+              {match.recurrence === 'WEEKLY' && (
+                <View style={styles.metaPill}>
+                  <Ionicons name="repeat-outline" size={12} color={theme.colors.text.secondary} />
+                  <Text style={[styles.capText, { fontSize: 11 }]}>Седмичен</Text>
+                </View>
+              )}
             </View>
-            <Text style={styles.priceLine}>
-              {(match.price_per_player ?? 0) > 0
-                ? `${(match.price_per_player ?? 0).toFixed(2)} €/играч`
-                : 'Безплатно'}
-              {' · '}{match.pricing_mode}
-            </Text>
+            <View style={styles.iconLine}>
+              <Ionicons name="cash-outline" size={14} color={theme.colors.accent.gold} />
+              <Text style={styles.priceLine}>
+                {(match.price_per_player ?? 0) > 0
+                  ? `${(match.price_per_player ?? 0).toFixed(2)} €/играч`
+                  : 'Безплатно'}
+                {' · '}{match.pricing_mode}
+              </Text>
+            </View>
 
             {!isCancelled && (
               <View style={{ marginTop: 14 }}>
@@ -337,6 +393,15 @@ export default function MatchRoom() {
         onClose={() => setCreateOpen(false)}
         onCreated={refresh}
       />
+      {match && (
+        <MatchActionsMenu
+          match={match}
+          visible={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          onChanged={async () => { await refresh(); }}
+          isOwner={groupRole === 'OWNER'}
+        />
+      )}
       <ShareGroupModal
         visible={shareOpen}
         groupId={groupId}
@@ -362,19 +427,45 @@ const styles = StyleSheet.create({
   },
   selector: { paddingHorizontal: 12, gap: 8, paddingBottom: 8 },
   selectorPill: {
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12,
-    backgroundColor: theme.colors.background.card,
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1, borderColor: theme.colors.border.primary,
+    minWidth: 64, alignItems: 'center',
   },
+  selectorPillActive: {
+    borderColor: theme.colors.accent.primary,
+    backgroundColor: 'rgba(59,130,246,0.18)',
+  },
+  selectorPillNew: {
+    backgroundColor: theme.colors.accent.primary,
+    borderColor: theme.colors.accent.primary,
+    minWidth: 44, paddingVertical: 12, alignItems: 'center', justifyContent: 'center',
+  },
+  selectorDay: { color: theme.colors.text.muted, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  selectorDayActive: { color: theme.colors.accent.primary },
+  selectorDate: { color: theme.colors.text.primary, fontSize: 14, fontWeight: '800', marginTop: 2 },
+  selectorTime: { color: theme.colors.text.secondary, fontSize: 11, fontWeight: '600', marginTop: 2 },
   selectorText: { color: theme.colors.text.secondary, fontSize: 12, fontWeight: '700' },
   matchTitle: { color: theme.colors.text.primary, fontSize: 20, fontWeight: '800' },
-  matchDate: { color: theme.colors.text.secondary, fontSize: 13, marginTop: 4 },
-  matchVenue: { color: theme.colors.accent.primary, fontSize: 13, marginTop: 4, fontWeight: '600' },
+  matchDate: { color: theme.colors.text.secondary, fontSize: 13 },
+  matchVenue: { color: theme.colors.accent.primary, fontSize: 13, fontWeight: '600' },
+  iconLine: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
+  metaPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: theme.colors.background.input,
+  },
+  menuBtn: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: theme.colors.background.input,
+    alignItems: 'center', justifyContent: 'center',
+  },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12, flexWrap: 'wrap' },
   capBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: theme.colors.background.input },
   capText: { color: theme.colors.text.primary, fontSize: 13, fontWeight: '700' },
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
-  priceLine: { color: theme.colors.text.muted, fontSize: 12, marginTop: 8 },
+  priceLine: { color: theme.colors.text.secondary, fontSize: 13, fontWeight: '700' },
   goingBox: {
     flex: 1, alignItems: 'center', paddingVertical: 12,
     borderRadius: 12, borderWidth: 1, borderColor: theme.colors.accent.success,
@@ -383,6 +474,7 @@ const styles = StyleSheet.create({
   goingText: { color: theme.colors.accent.success, fontWeight: '700' },
   tabsBar: { gap: 6, paddingHorizontal: 4, paddingVertical: 12 },
   tabBtn: {
+    flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
     backgroundColor: 'transparent',
   },

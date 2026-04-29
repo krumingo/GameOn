@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing } from 'react-native-reanimated';
+import { webAnim } from '@/utils/webAnimations';
 import { theme } from '@/theme/darkTheme';
 
 interface Props {
@@ -22,7 +23,11 @@ const SkeletonRow: React.FC<{ index: number }> = ({ index }) => {
   const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
   return (
-    <Animated.View style={[styles.card, animatedStyle, { marginTop: index === 0 ? 0 : 12 }]} testID={`skeleton-${index}`}>
+    <Animated.View
+      style={[styles.card, animatedStyle, { marginTop: index === 0 ? 0 : 12 }]}
+      {...webAnim('pulse')}
+      testID={`skeleton-${index}`}
+    >
       <View style={[styles.line, { width: '70%', height: 14 }]} />
       <View style={[styles.line, { width: '40%', height: 11, marginTop: 8 }]} />
       <View style={[styles.line, { width: '85%', height: 10, marginTop: 14 }]} />

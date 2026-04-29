@@ -83,22 +83,51 @@ async def _build_group_summary(group: dict, user_id: str, role: Optional[str] = 
 
     matches_list = []
     async for m in matches_cursor:
-        going_count = await db.rsvps.count_documents({"match_id": m["_id"], "status": "GOING"})
+        going_count = await db.rsvps.count_documents({"match_id": m["_id"], "status": "going"})
+        waitlist_count = await db.rsvps.count_documents({"match_id": m["_id"], "status": "waitlist"})
         player_limit = m.get("player_limit") or group.get("default_player_limit", 14)
         free_spots = max(0, player_limit - going_count)
         user_rsvp = await db.rsvps.find_one(
             {"match_id": m["_id"], "user_id": ObjectId(user_id)},
             {"status": 1, "_id": 0},
         )
+        # Top 5 going names (for inline avatars). Sort by recent join.
+        going_names = []
+        try:
+            async for r in db.rsvps.find(
+                {"match_id": m["_id"], "status": "going"},
+                {"display_name": 1, "user_id": 1, "guest_id": 1, "_id": 0},
+            ).sort("created_at", 1).limit(5):
+                nm = r.get("display_name")
+                if not nm and r.get("user_id"):
+                    u = await db.users.find_one({"_id": r["user_id"]}, {"name": 1, "_id": 0})
+                    nm = u.get("name") if u else None
+                if not nm and r.get("guest_id"):
+                    g_doc = await db.guests.find_one({"_id": r["guest_id"]}, {"name": 1, "_id": 0})
+                    nm = g_doc.get("name") if g_doc else None
+                if nm:
+                    going_names.append({
+                        "name": nm,
+                        "user_id": str(r["user_id"]) if r.get("user_id") else None,
+                        "is_guest": bool(r.get("guest_id")),
+                    })
+        except Exception:
+            pass
         matches_list.append({
             "id": str(m["_id"]),
             "name": m.get("name"),
             "venue": m.get("venue"),
             "start_datetime": m["start_datetime"].isoformat() if hasattr(m.get("start_datetime"), "isoformat") else m.get("start_datetime"),
             "going_count": going_count,
+            "waitlist_count": waitlist_count,
             "free_spots": free_spots,
+            "player_limit": player_limit,
             "user_rsvp_status": user_rsvp.get("status") if user_rsvp else None,
             "price_per_player": m.get("price_per_player"),
+            "pricing_mode": m.get("pricing_mode"),
+            "status": m.get("status"),
+            "recurrence": m.get("recurrence"),
+            "going_names": going_names,
         })
 
     plan = await get_group_plan(str(gid))

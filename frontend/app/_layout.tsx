@@ -13,6 +13,7 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { PaywallOverlay } from '@/components/PaywallOverlay';
 import { theme } from '@/theme/darkTheme';
 import { events } from '@/utils/events';
+import { injectWebAnimations } from '@/utils/webAnimations';
 import {
   setupAndroidChannels,
   configureForegroundHandler,
@@ -116,13 +117,23 @@ function PushSetup() {
 
 export default function RootLayout() {
   const loadPrefs = useThemeStore((s) => s.loadPrefs);
-  useEffect(() => { loadPrefs(); }, []);
+  useEffect(() => { loadPrefs(); injectWebAnimations(); }, []);
+
+  const rootBg: any = Platform.OS === 'web'
+    ? {
+        background:
+          `radial-gradient(1200px 600px at 80% -10%, rgba(59,130,246,0.08), transparent 60%),
+           radial-gradient(900px 500px at 0% 100%, rgba(139,92,246,0.06), transparent 60%),
+           linear-gradient(180deg, ${theme.colors.background.primary} 0%, #0B1018 100%)`,
+        minHeight: '100vh',
+      }
+    : { backgroundColor: theme.colors.background.primary };
 
   return (
     <ErrorBoundary>
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: theme.colors.background.primary }}>
+      <GestureHandlerRootView style={[{ flex: 1 }, rootBg]}>
         <SafeAreaProvider>
-          <View style={{ flex: 1, backgroundColor: theme.colors.background.primary }}>
+          <View style={[{ flex: 1 }, rootBg]}>
             <OfflineBanner />
             <StatusBar style="light" />
             <AuthGuard>

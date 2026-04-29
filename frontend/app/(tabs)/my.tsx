@@ -14,6 +14,7 @@ import { WeeklyStats } from '@/components/WeeklyStats';
 import { SeasonBadge } from '@/components/SeasonBadge';
 import { GroupActionModal } from '@/components/GroupActionModal';
 import { LoadingButton } from '@/components/LoadingButton';
+import { webAnim } from '@/utils/webAnimations';
 import { theme } from '@/theme/darkTheme';
 
 interface Group {
@@ -38,18 +39,23 @@ function startOfWeek(date: Date, offset: number): Date {
 }
 
 function calcWeek(groups: Group[], offset: number, currentUserId?: string) {
-  const monday = startOfWeek(new Date(), offset);
+  const now = new Date();
+  const monday = startOfWeek(now, offset);
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
   sunday.setHours(23, 59, 59, 999);
+  // For current week (offset 0) only count upcoming (>= now); past weeks count
+  // their full range; future weeks always upcoming.
+  const fromBound = offset === 0 ? now : monday;
   const dailyMatches = [0, 0, 0, 0, 0, 0, 0];
   const dailyJoined = [0, 0, 0, 0, 0, 0, 0];
   let totalMatches = 0;
   let joined = 0;
   groups.forEach((g) => {
     (g.matches_list || []).forEach((m: any) => {
+      if (m.status === 'CANCELLED') return;
       const dt = new Date(m.start_datetime);
-      if (dt >= monday && dt <= sunday) {
+      if (dt >= fromBound && dt <= sunday) {
         const dow = (dt.getDay() + 6) % 7;
         dailyMatches[dow] += 1;
         totalMatches += 1;
@@ -185,7 +191,7 @@ export default function MyScreen() {
         </View>
       ) : (
         groups.map((g, idx) => (
-          <Animated.View key={g.id} entering={FadeInDown.delay(idx * 60).duration(280)}>
+          <Animated.View key={g.id} entering={FadeInDown.delay(idx * 60).duration(280)} {...webAnim('fade-in-up', { delay: idx * 60 })}>
             <GroupCard
               group={g}
               currentUserId={user?.id}
@@ -209,7 +215,7 @@ export default function MyScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background.primary },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: 16, paddingBottom: 40 },
   empty: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: 24 },
   emptyIconWrap: {

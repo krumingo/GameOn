@@ -41,6 +41,7 @@ from deps import (
     get_db,
     get_user_role_in_group,
     require_admin,
+    require_owner,
     serialize_doc,
     utc_now,
 )
@@ -1755,3 +1756,24 @@ async def get_series(match_id: str, current=Depends(get_current_user_impl)):
             "recurrence_active": bool(m.get("recurrence_active")),
         })
     return out
+
+
+
+@match_router.delete("/{match_id}")
+async def delete_match(match_id: str, current=Depends(get_current_user_impl)):
+    """Hard delete a match. OWNER only. Cascades to its rsvps, chat messages and push log."""
+    db = get_db()
+    match = await _get_match(match_id)
+    await require_owner(current["id"], str(match["group_id"]))
+    mid = match["_id"]
+    await db.rsvps.delete_many({"match_id": mid})
+    try:
+        await db.chat_messages.delete_many({"match_id": mid})
+    except Exception:
+        pass
+    try:
+        await db.push_log.delete_many({"match_id": mid})
+    except Exception:
+        pass
+    await db.matches.delete_one({"_id": mid})
+    return {"deleted": True, "match_id": match_id}

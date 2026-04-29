@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { chatApi } from '@/api/client';
+import { Avatar } from '@/components/Avatar';
 import { theme } from '@/theme/darkTheme';
 
 interface Props {
@@ -75,9 +76,7 @@ export const ChatTab: React.FC<Props> = ({ groupId, matchId, currentUserId }) =>
               testID={`chat-msg-${m.id}`}
             >
               {!mine && (
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{(m.user_name || '?').slice(0, 1).toUpperCase()}</Text>
-                </View>
+                <Avatar name={m.user_name || '?'} size={30} />
               )}
               <View style={[
                 styles.bubble,

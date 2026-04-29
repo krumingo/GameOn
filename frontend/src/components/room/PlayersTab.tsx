@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { matchesApi } from '@/api/client';
 import { GlassCard } from '@/components/GlassCard';
 import { LoadingButton } from '@/components/LoadingButton';
+import { Avatar } from '@/components/Avatar';
 import { theme } from '@/theme/darkTheme';
 
 interface Props {
@@ -85,7 +86,10 @@ export const PlayersTab: React.FC<Props> = ({
           </Text>
           {pending.map((r) => (
             <View key={r.id} style={styles.row} testID={`pending-${r.user_id}`}>
-              <Text style={styles.name}>{r.name}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                <Avatar name={r.name} size={28} />
+                <Text style={styles.name}>{r.name}</Text>
+              </View>
               {isAdmin && (
                 <View style={{ flexDirection: 'row', gap: 6 }}>
                   <TouchableOpacity
@@ -116,14 +120,15 @@ export const PlayersTab: React.FC<Props> = ({
             const isMe = r.user_id && r.user_id === currentUserId;
             return (
               <View key={r.id} style={styles.row} testID={`player-${r.user_id || r.guest_id}`}>
-                <Text style={styles.name}>
-                  <Text style={styles.muted}>#{idx + 1} </Text>
-                  {r.name}
-                  {isMe && <Text style={{ color: theme.colors.accent.secondary }}> (ти)</Text>}
-                  {r.is_guest && (
-                    <Text style={[styles.guestBadge]}> ГОСТ</Text>
-                  )}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                  <Text style={styles.idx}>#{idx + 1}</Text>
+                  <Avatar name={r.name} size={28} />
+                  <Text style={styles.name} numberOfLines={1}>
+                    {r.name}
+                    {isMe && <Text style={{ color: theme.colors.accent.secondary }}> (ти)</Text>}
+                    {r.is_guest && <Text style={[styles.guestBadge]}>  ГОСТ</Text>}
+                  </Text>
+                </View>
                 {isAdmin && r.user_id !== currentUserId && (
                   <TouchableOpacity
                     onPress={() => handleRemove(r.user_id || r.guest_id, r.name)}
@@ -145,9 +150,12 @@ export const PlayersTab: React.FC<Props> = ({
           </Text>
           {waitlist.map((r) => (
             <View key={r.id} style={styles.row}>
-              <Text style={styles.name}>
-                <Text style={styles.muted}>#{r.waitlist_position} </Text>{r.name}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Avatar name={r.name} size={26} />
+                <Text style={styles.name}>
+                  <Text style={styles.muted}>#{r.waitlist_position} </Text>{r.name}
+                </Text>
+              </View>
             </View>
           ))}
         </GlassCard>
@@ -310,6 +318,7 @@ const styles = StyleSheet.create({
   sectionTitle: { color: theme.colors.text.primary, fontSize: 14, fontWeight: '700', marginBottom: 8 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 },
   name: { color: theme.colors.text.primary, fontSize: 14, flex: 1 },
+  idx: { color: theme.colors.text.muted, fontSize: 12, fontWeight: '700', minWidth: 22 },
   muted: { color: theme.colors.text.muted, fontSize: 13 },
   guestBadge: { color: theme.colors.accent.secondary, fontWeight: '700', fontSize: 11 },
   iconBtn: {
