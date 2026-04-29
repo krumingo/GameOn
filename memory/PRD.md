@@ -1,5 +1,11 @@
 # FootBallChat — PRD
 
+> **Status (2026-04-29):** Prompt 13 (Visual Overhaul + Bugfix + UX) — COMPLETE.
+> All 13 prompts shipped. Production-ready Dark-Glass UI, hashed-color avatars,
+> rich match cards with capacity bars + inline avatar stacks, animated entrances
+> (CSS web fallback + reanimated native), full match-management ⋮ menu (Edit /
+> Cancel / Stop-Recurrence / Delete) and corrected weekly counters.
+
 ## Original Problem Statement
 Приложение за организиране на любителски футболни мачове — групи, записване, делене на отбори, плащания, статистика, маркетплейс. Валута: EUR. Език: Български. Тема: Dark Glass.
 
