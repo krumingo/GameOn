@@ -1,5 +1,17 @@
 # GameOn — CHANGELOG
 
+## 2026-04-30 — Prompt 13 follow-up: Cancelled-count fix
+
+### Bug fix
+- `backend/routes/groups.py::upcoming_q` now excludes `status: "CANCELLED"`
+  so `matches_count` (used for "X мача" в GroupCard) и `matches_list` вече
+  не броят отменените мачове.
+- Същият фикс в discover endpoint (`upcoming_count`/`next_match` заявки).
+
+### Verified
+- Live test: MatchTest-ebf2de беше 6 → cancel 1 мач → веднага се оправи на 5.
+  Cancelled matches вече не се показват изобщо в `matches_list`.
+
 ## 2026-04-29 — Prompt 13: Visual Overhaul + Bugfix + UX
 
 ### Bug fixes

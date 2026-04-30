@@ -77,7 +77,7 @@ async def _build_group_summary(group: dict, user_id: str, role: Optional[str] = 
 
     members_cnt = await count_members(str(gid))
     now = utc_now()
-    upcoming_q = {"group_id": gid, "start_datetime": {"$gte": now}}
+    upcoming_q = {"group_id": gid, "start_datetime": {"$gte": now}, "status": {"$ne": "CANCELLED"}}
     matches_count = await db.matches.count_documents(upcoming_q)
     matches_cursor = db.matches.find(upcoming_q).sort("start_datetime", 1).limit(5)
 
@@ -199,12 +199,12 @@ async def public_groups(
     now = utc_now()
     async for g in cursor:
         upcoming_count = await db.matches.count_documents(
-            {"group_id": g["_id"], "start_datetime": {"$gte": now}}
+            {"group_id": g["_id"], "start_datetime": {"$gte": now}, "status": {"$ne": "CANCELLED"}}
         )
         if has_upcoming_matches and upcoming_count == 0:
             continue
         next_match = await db.matches.find_one(
-            {"group_id": g["_id"], "start_datetime": {"$gte": now}},
+            {"group_id": g["_id"], "start_datetime": {"$gte": now}, "status": {"$ne": "CANCELLED"}},
             sort=[("start_datetime", 1)],
         )
         members_cnt = await count_members(str(g["_id"]))
