@@ -6,6 +6,7 @@ import { withRetry } from '@/utils/retry';
 import { GlassCard } from '@/components/GlassCard';
 import { LoadingButton } from '@/components/LoadingButton';
 import { PaywallOverlay } from '@/components/PaywallOverlay';
+import { StatusPill } from '@/components/StatusPill';
 import { theme } from '@/theme/darkTheme';
 
 const PRO_PLANS = ['PRO', 'TRIAL', 'GRACE'];
@@ -109,10 +110,6 @@ export const PaymentsTab: React.FC<Props> = ({ match, groupPlan, groupId, isAdmi
         <Text style={styles.sectionTitle}>Играчи</Text>
         {(data.per_player || []).map((p: any) => {
           const status = p.status;
-          const statusColor =
-            status === 'PAID' ? theme.colors.status.paid :
-            status === 'OVERPAID' ? theme.colors.status.overpaid :
-            theme.colors.status.unpaid;
           return (
             <View key={`${p.user_id || p.guest_id}`} style={styles.row} testID={`pay-${p.user_id || p.guest_id}`}>
               <View style={{ flex: 1 }}>
@@ -127,9 +124,7 @@ export const PaymentsTab: React.FC<Props> = ({ match, groupPlan, groupId, isAdmi
                   </Text>
                 )}
               </View>
-              <View style={[styles.statusPill, { backgroundColor: `${statusColor}22`, borderColor: statusColor }]}>
-                <Text style={[styles.statusText, { color: statusColor }]}>{status}</Text>
-              </View>
+              <StatusPill status={status} size="sm" testID={`pay-status-${p.user_id || p.guest_id}`} />
               {isAdmin && (
                 <TouchableOpacity
                   onPress={() => setMarkFor(p)}
