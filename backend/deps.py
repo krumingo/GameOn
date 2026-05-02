@@ -5,7 +5,7 @@ import os
 import re
 import logging
 from datetime import datetime, timezone, timedelta
-from typing import Optional, Any
+from typing import Optional, Any, List
 
 import jwt
 from bson import ObjectId
@@ -489,6 +489,19 @@ class CashTxnCreateRequest(BaseModel):
     counterparty: Optional[str] = None
     status: str = "PAID"  # PLANNED | PAID
     related_match_id: Optional[str] = None
+
+
+class CashTxnBulkEntry(BaseModel):
+    user_id: str          # member of the group who paid
+    amount: float         # how much THIS person paid (can differ between entries)
+    note: Optional[str] = None  # optional per-person note (e.g., "пари в брой")
+
+
+class CashTxnBulkRequest(BaseModel):
+    type: str = "INCOME"  # bulk is typically INCOME (collection); allow EXPENSE too for symmetry
+    category: str
+    note: Optional[str] = None      # shared note for all transactions (e.g., "Банкет 22 март")
+    entries: List[CashTxnBulkEntry]  # one entry per person who paid
 
 
 class CashTxnUpdateRequest(BaseModel):

@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse, JSONResponse
 
 from deps import (
+    CashTxnBulkRequest,
     CashTxnCreateRequest,
     CashTxnUpdateRequest,
     check_pro_access,
@@ -50,6 +51,8 @@ def _serialize_txn(t: dict) -> dict:
         "related_match_id": str(t["related_match_id"]) if t.get("related_match_id") else None,
         "match_id": str(t["match_id"]) if t.get("match_id") else None,
         "created_by_user_id": str(t["created_by_user_id"]) if t.get("created_by_user_id") else None,
+        "paid_by_user_id": str(t["paid_by_user_id"]) if t.get("paid_by_user_id") else None,
+        "bulk_collection_id": t.get("bulk_collection_id"),
         "created_at": t["created_at"].isoformat() if hasattr(t.get("created_at"), "isoformat") else t.get("created_at"),
         "paid_at": t["paid_at"].isoformat() if hasattr(t.get("paid_at"), "isoformat") else t.get("paid_at"),
     }
@@ -225,6 +228,103 @@ async def create_transaction(group_id: str, payload: CashTxnCreateRequest,
     res = await db.cash_transactions.insert_one(doc)
     saved = await db.cash_transactions.find_one({"_id": res.inserted_id})
     return _serialize_txn(saved)
+
+
+@router.post("/{group_id}/cash/transactions/bulk")
+async def create_transactions_bulk(group_id: str, payload: CashTxnBulkRequest,
+                                    current=Depends(get_current_user_impl)):
+    """
+    Create multiple cash transactions in one request.
+    Each entry has its own user_id (paid_by) and amount.
+    All entries share the same category and (optionally) a shared note.
+    Per-entry note overrides the shared note.
+    """
+    await check_pro_access(group_id)
+    await require_admin(current["id"], group_id)
+    db = get_db()
+
+    try:
+        gid = ObjectId(group_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    if payload.type not in ("INCOME", "EXPENSE"):
+        raise HTTPException(status_code=400, detail="type трябва да е INCOME или EXPENSE")
+
+    if not payload.entries or len(payload.entries) == 0:
+        raise HTTPException(status_code=400, detail="entries не може да е празен")
+
+    if len(payload.entries) > 100:
+        raise HTTPException(status_code=400, detail="Максимум 100 записа в едно събиране")
+
+    # Validate category against group config
+    group = await db.groups.find_one({"_id": gid})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    cats = list(group.get("cash_categories") or [])
+    inactive = set(group.get("inactive_categories") or [])
+    if payload.category not in cats:
+        raise HTTPException(status_code=400, detail="Невалидна категория")
+    if payload.category in inactive:
+        raise HTTPException(status_code=400, detail="Категорията е деактивирана")
+
+    # Pre-validate all entries (fail-fast: no inserts happen if ANY entry is invalid)
+    member_ids_in_group = set()
+    async for m in db.memberships.find({"group_id": gid}, {"user_id": 1}):
+        member_ids_in_group.add(str(m["user_id"]))
+
+    user_oids: list = []
+    for idx, entry in enumerate(payload.entries):
+        if not entry.amount or entry.amount <= 0:
+            raise HTTPException(status_code=400, detail=f"Запис {idx + 1}: amount > 0 е задължително")
+        try:
+            uid_oid = ObjectId(entry.user_id)
+        except Exception:
+            raise HTTPException(status_code=400, detail=f"Запис {idx + 1}: невалиден user_id")
+        if str(entry.user_id) not in member_ids_in_group:
+            raise HTTPException(status_code=400, detail=f"Запис {idx + 1}: потребителят не е член на групата")
+        user_oids.append(uid_oid)
+
+    # Resolve names (batched) for counterparty display
+    name_map: dict = {}
+    async for u in db.users.find({"_id": {"$in": user_oids}}, {"name": 1, "nickname": 1}):
+        name_map[str(u["_id"])] = u.get("nickname") or u.get("name") or ""
+
+    now = utc_now()
+    bulk_id = now.isoformat()
+    docs = []
+    for entry in payload.entries:
+        person_name = name_map.get(entry.user_id, "")
+        per_note = entry.note or payload.note  # per-entry note overrides shared
+        docs.append({
+            "group_id": gid,
+            "type": payload.type,
+            "category": payload.category,
+            "amount": round(float(entry.amount), 2),
+            "currency": "EUR",
+            "note": per_note,
+            "counterparty": person_name,
+            "paid_by_user_id": ObjectId(entry.user_id),
+            "status": "PAID",
+            "related_match_id": None,
+            "created_by_user_id": ObjectId(current["id"]),
+            "created_at": now,
+            "paid_at": now,
+            "bulk_collection_id": bulk_id,
+        })
+
+    # Atomic batch insert — Mongo insert_many is ordered by default; if any fails,
+    # earlier inserts would remain. We already validated above, so this is safe.
+    result = await db.cash_transactions.insert_many(docs)
+
+    total = sum(d["amount"] for d in docs)
+    return {
+        "created_count": len(result.inserted_ids),
+        "total_amount": round(total, 2),
+        "category": payload.category,
+        "type": payload.type,
+        "bulk_collection_id": bulk_id,
+    }
 
 
 @router.patch("/{group_id}/cash/transactions/{tx_id}")
