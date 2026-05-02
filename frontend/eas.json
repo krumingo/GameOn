@@ -19,6 +19,16 @@
         "EXPO_PUBLIC_API_URL": "https://api-staging.gameon.bg"
       }
     },
+    "preview-apk": {
+      "developmentClient": false,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://football-chat-api.preview.emergentagent.com"
+      }
+    },
     "production": {
       "autoIncrement": true,
       "env": {
