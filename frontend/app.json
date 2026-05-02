@@ -56,14 +56,6 @@
       "expo-calendar",
       "expo-location"
     ],
-    "extra": {
-      "eas": {
-        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
-      }
-    },
-    "updates": {
-      "url": "https://u.expo.dev/REPLACE_WITH_EAS_PROJECT_ID"
-    },
     "runtimeVersion": {
       "policy": "sdkVersion"
     },
